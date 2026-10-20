@@ -28,7 +28,7 @@
 <div class="card">
     <div class="header">
         <h2>Disparador WhatsApp 🚀</h2>
-        <p>Gere o link de avaliação personalizado para enviar ao seu cliente.</p>
+        <p>Cadastre o representante e o cliente para gerar o link de avaliação.</p>
     </div>
 
     <div class="form-group">
@@ -46,7 +46,7 @@
         <input type="text" id="telefone" placeholder="Ex: 84999999999">
     </div>
 
-    <button class="btn" onclick="gerarLink()">Gerar Link de Avaliação 🔗</button>
+    <button class="btn" onclick="gerarLink()">Cadastrar e Gerar Link 🔗</button>
 
     <div class="resultado" id="box-resultado">
         <p id="link-gerado"></p>
@@ -66,7 +66,6 @@
             return;
         }
 
-        // Envia requisição com o Content-Type correto para evitar erro 415/Unsupported Media Type
         fetch('/cadastrar_representante', {
             method: 'POST',
             headers: {
@@ -77,7 +76,6 @@
         })
         .then(res => res.json())
         .then(data => {
-            // Gera o link codificando os textos para evitar quebrar na URL
             const base = window.location.origin;
             urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
             
@@ -86,7 +84,6 @@
         })
         .catch(err => {
             console.error(err);
-            // Mesmo se houver falha de rede, gera o link para não travar o usuário
             const base = window.location.origin;
             urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
             document.getElementById('link-gerado').innerText = urlFinal;

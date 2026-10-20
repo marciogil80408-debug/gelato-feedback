@@ -22,14 +22,14 @@ class Feedback(db.Model):
     data_registro = db.Column(db.DateTime, nullable=False)
     representante = db.Column(db.String(100), nullable=False)
     cliente = db.Column(db.String(100), nullable=False)
-    nota_representante = db.Column(db.Integer, nullable=False)
-    visitas_suporte = db.Column(db.String(150), nullable=False)
+    nota_representante = db.Column(db.Integer, nullable=True)
+    visitas_suporte = db.Column(db.String(150), nullable=True)
     obs_visitas = db.Column(db.Text, nullable=True)
-    falta_produto = db.Column(db.String(150), nullable=False)
+    falta_produto = db.Column(db.String(150), nullable=True)
     qual_falta = db.Column(db.Text, nullable=True)
-    entrega_status = db.Column(db.String(150), nullable=False)
+    entrega_status = db.Column(db.String(150), nullable=True)
     obs_entrega = db.Column(db.Text, nullable=True)
-    nota_geral = db.Column(db.Integer, nullable=False)
+    nota_geral = db.Column(db.Integer, nullable=True)
     obs_geral = db.Column(db.Text, nullable=True)
     comentario = db.Column(db.Text, nullable=True)
 
@@ -43,12 +43,37 @@ def avaliacao():
     cliente = request.args.get('cliente', 'Cliente')
     return render_template('avaliacao.html', representante=representante, cliente=cliente)
 
-# Rota para Salvar o Feedback via Formulário
+# Rota para Cadastrar/Gerar o Link pelo Representante
+@app.route('/cadastrar_representante', methods=['POST'])
+def cadastrar_representante():
+    dados = request.json
+    try:
+        fuso_br = pytz.timezone('America/Sao_Paulo')
+        agora_brasil = datetime.now(fuso_br)
+
+        # Registra o início do atendimento/geração do link
+        novo = Feedback(
+            data_registro=agora_brasil,
+            representante=dados.get('representante'),
+            cliente=dados.get('cliente'),
+            nota_representante=0,
+            visitas_suporte="Pendente",
+            falta_produto="Pendente",
+            entrega_status="Pendente",
+            nota_geral=0
+        )
+        db.session.add(novo)
+        db.session.commit()
+        return jsonify({'status': 'sucesso'})
+    except Exception as e:
+        print("Erro ao cadastrar:", str(e))
+        return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
+
+# Rota para Salvar o Feedback via Formulário preenchido pelo cliente
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
     try:
-        # Fuso horário oficial do Brasil
         fuso_br = pytz.timezone('America/Sao_Paulo')
         agora_brasil = datetime.now(fuso_br)
 
@@ -72,16 +97,6 @@ def salvar():
         return jsonify({'status': 'sucesso'})
     except Exception as e:
         print("Erro ao salvar:", str(e))
-        return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
-
-# Rota para cadastrar representante (evita o erro 404 que travava o disparador)
-@app.route('/cadastrar_representante', methods=['POST'])
-def cadastrar_representante():
-    dados = request.json
-    try:
-        # Retorna sucesso para que o script do disparador funcione perfeitamente
-        return jsonify({'status': 'sucesso'})
-    except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
 # Painel de Gestão e Resultados
