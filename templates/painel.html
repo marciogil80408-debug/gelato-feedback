@@ -19,6 +19,13 @@
         .btn-acao { background: #2563eb; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.15s; }
         .btn-acao:hover { background: #1d4ed8; }
         
+        /* Barra de Filtros Inteligentes */
+        .card-filtros { background: #fff; padding: 15px 20px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .filtro-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
+        .filtro-group label { font-size: 12px; font-weight: 600; color: #475569; }
+        .filtro-group select, .filtro-group input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; background: #f8fafc; }
+        .filtro-group select:focus, .filtro-group input:focus { border-color: #2563eb; background: #fff; }
+
         /* Área dos Gráficos */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 25px; }
         .card-grafico { background: #fff; padding: 20px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
@@ -42,15 +49,39 @@
 <div class="container">
     <div class="header-painel">
         <div class="logo-area">
-            <!-- Exibindo a logomarca oficial da pasta static -->
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" style="height: 55px; width: auto; border-radius: 10px; object-fit: contain;">
             <div>
-                <h1>Gelato da Fran & Doceria JM</h1>
+                <h1>Gelato da Fran</h1>
                 <p>Painel de Desempenho e Indicadores Comerciais (RN e PB)</p>
             </div>
         </div>
         <div>
             <a href="/disparar" class="btn-acao">🚀 Ir para o Disparador</a>
+        </div>
+    </div>
+
+    <!-- BARRA DE FILTROS INTELIGENTES -->
+    <div class="card-filtros">
+        <div class="filtro-group">
+            <label for="filtroRep">Filtrar por Representante:</label>
+            <select id="filtroRep" onchange="aplicarFiltros()">
+                <option value="">Todos os Representantes</option>
+                {% for r in representantes %}
+                <option value="{{ r.nome }}">{{ r.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filtro-group">
+            <label for="filtroEstado">Filtrar por Rota (Estado):</label>
+            <select id="filtroEstado" onchange="aplicarFiltros()">
+                <option value="">Todos os Estados (RN e PB)</option>
+                <option value="/RN">RN (Rio Grande do Norte)</option>
+                <option value="/PB">PB (Paraíba)</option>
+            </select>
+        </div>
+        <div class="filtro-group">
+            <label for="filtroBusca">Buscar Cliente / Loja:</label>
+            <input type="text" id="filtroBusca" placeholder="Digite o nome da loja..." onkeyup="aplicarFiltros()">
         </div>
     </div>
 
@@ -69,7 +100,7 @@
     <!-- TABELA DE HISTÓRICO COMPLETO -->
     <div class="card-tabela">
         <h3>Histórico Completo de Feedbacks dos Clientes</h3>
-        <table>
+        <table id="tabelaFeedbacks">
             <thead>
                 <tr>
                     <th>Data / Hora</th>
@@ -85,7 +116,7 @@
             </thead>
             <tbody>
                 {% for f in feedbacks %}
-                <tr>
+                <tr data-representante="{{ f.representante }}" data-cliente="{{ f.cliente }}">
                     <td>{{ f.data_registro.strftime('%d/%m/%Y %H:%M') if f.data_registro else '-' }}</td>
                     <td><strong>{{ f.cliente }}</strong></td>
                     <td>{{ f.representante }}</td>
@@ -121,64 +152,105 @@
 </div>
 
 <script>
+    let chartEntregas, chartNotas;
+
     const feedbacksData = [
         {% for f in feedbacks %}
         {
+            representante: {{ f.representante | tojson }},
+            cliente: {{ f.cliente | tojson }},
             entrega: {{ (f.entrega_status or 'Não Informado') | tojson }},
             notaGeral: {{ f.nota_geral or 0 }}
         },
         {% endfor %}
     ];
 
-    let entregasContagem = {};
-    let notasContagem = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0};
+    function renderizarGraficos(dadosParaGrafico) {
+        let entregasContagem = {};
+        let notasContagem = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0};
 
-    feedbacksData.forEach(item => {
-        let ent = item.entrega;
-        entregasContagem[ent] = (entregasContagem[ent] || 0) + 1;
+        dadosParaGrafico.forEach(item => {
+            let ent = item.entrega;
+            entregasContagem[ent] = (entregasContagem[ent] || 0) + 1;
 
-        let nota = item.notaGeral;
-        if (nota >= 1 && nota <= 10) {
-            notasContagem[nota] = (notasContagem[nota] || 0) + 1;
-        }
-    });
-
-    const ctxEntregas = document.getElementById('graficoEntregas').getContext('2d');
-    new Chart(ctxEntregas, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(entregasContagem),
-            datasets: [{
-                data: Object.values(entregasContagem),
-                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6']
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
-        }
-    });
-
-    const ctxNotas = document.getElementById('graficoNotas').getContext('2d');
-    new Chart(ctxNotas, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(notasContagem),
-            datasets: [{
-                label: 'Quantidade de Notas',
-                data: Object.values(notasContagem),
-                backgroundColor: '#2563eb',
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            let nota = item.notaGeral;
+            if (nota >= 1 && nota <= 10) {
+                notasContagem[nota] = (notasContagem[nota] || 0) + 1;
             }
-        }
-    });
+        });
+
+        if (chartEntregas) chartEntregas.destroy();
+        if (chartNotas) chartNotas.destroy();
+
+        const ctxEntregas = document.getElementById('graficoEntregas').getContext('2d');
+        chartEntregas = new Chart(ctxEntregas, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(entregasContagem),
+                datasets: [{
+                    data: Object.values(entregasContagem),
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+            }
+        });
+
+        const ctxNotas = document.getElementById('graficoNotas').getContext('2d');
+        chartNotas = new Chart(ctxNotas, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(notasContagem),
+                datasets: [{
+                    label: 'Quantidade de Notas',
+                    data: Object.values(notasContagem),
+                    backgroundColor: '#2563eb',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
+
+    function aplicarFiltros() {
+        const repFiltro = document.getElementById('filtroRep').value;
+        const estadoFiltro = document.getElementById('filtroEstado').value;
+        const buscaFiltro = document.getElementById('filtroBusca').value.toLowerCase();
+
+        const linhas = document.querySelectorAll('#tabelaFeedbacks tbody tr');
+        let dadosFiltrados = [];
+
+        linhas.forEach(linha => {
+            if (linha.cells.length === 1) return;
+
+            const rep = linha.getAttribute('data-representante');
+            const cliente = linha.getAttribute('data-cliente');
+
+            let matchRep = !repFiltro || rep === repFiltro;
+            let matchEstado = !estadoFiltro || cliente.includes(estadoFiltro);
+            let matchBusca = !buscaFiltro || cliente.toLowerCase().includes(buscaFiltro);
+
+            if (matchRep && matchEstado && matchBusca) {
+                linha.style.display = '';
+                const itemOriginal = feedbacksData.find(f => f.representante === rep && f.cliente === cliente);
+                if (itemOriginal) dadosFiltrados.push(itemOriginal);
+            } else {
+                linha.style.display = 'none';
+            }
+        });
+
+        renderizarGraficos(dadosFiltrados);
+    }
+
+    renderizarGraficos(feedbacksData);
 </script>
 
 </body>
