@@ -132,7 +132,14 @@
                     <td>{{ f.data_registro.strftime('%d/%m/%Y %H:%M') if f.data_registro else '-' }}</td>
                     <td><strong>{{ f.cliente }}</strong></td>
                     <td>{{ f.representante }}</td>
-                    <td style="text-align: center; font-weight: bold;">{{ f.nota_representante or '-' }}</td>
+                    <!-- Nota do Representante exibida em Estrelas ⭐ de 1 a 5 -->
+                    <td style="text-align: center; white-space: nowrap;">
+                        {% if f.nota_representante and f.nota_representante > 0 %}
+                            {% for i in range(f.nota_representante) %}⭐{% endfor %} <span style="font-size: 11px; color: #64748b;">({{ f.nota_representante }}/5)</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td>{{ f.visitas_suporte or '-' }}</td>
                     <td>{{ f.falta_produto or '-' }}</td>
                     <td>
@@ -187,7 +194,6 @@
             let entRaw = (item.entrega || "").toLowerCase();
             let categoriaEntrega = item.entrega || "Não Informado";
 
-            // Normalização inteligente para agrupar entregas corretamente no gráfico
             if (entRaw.includes("100%") || entRaw.includes("correto") || entRaw.includes("tudo")) {
                 categoriaEntrega = "Sucesso (100% Correto)";
             } else if (entRaw.includes("problema") || entRaw.includes("atraso") || entRaw.includes("falta")) {
