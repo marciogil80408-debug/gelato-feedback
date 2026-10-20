@@ -16,19 +16,19 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Tabela de Representantes Salvos
+# Tabela de Representantes Cadastrados Permanentemente
 class RepresentanteModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
 
-# Tabela de Clientes Salvos
+# Tabela de Clientes/Lojas Cadastrados Permanentemente
 class ClienteModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     whatsapp = db.Column(db.String(50), nullable=True)
     representante = db.Column(db.String(100), nullable=True)
 
-# Tabela de Feedbacks / Avaliações
+# Tabela de Feedbacks / Avaliações dos Clientes
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_registro = db.Column(db.DateTime, nullable=False)
@@ -55,7 +55,7 @@ def avaliacao():
     cliente = request.args.get('cliente', 'Cliente')
     return render_template('avaliacao.html', representante=representante, cliente=cliente)
 
-# Rota API para Cadastrar Representante
+# Rota para Cadastrar Representante
 @app.route('/api/cadastrar_representante', methods=['POST'])
 def cadastrar_representante():
     dados = request.json
@@ -65,14 +65,13 @@ def cadastrar_representante():
     try:
         existe = RepresentanteModel.query.filter_by(nome=nome).first()
         if not existe:
-            novo = RepresentanteModel(nome=nome)
-            db.session.add(novo)
+            db.session.add(RepresentanteModel(nome=nome))
             db.session.commit()
         return jsonify({'status': 'sucesso'})
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota API para Cadastrar Cliente
+# Rota para Cadastrar Cliente
 @app.route('/api/cadastrar_cliente', methods=['POST'])
 def cadastrar_cliente():
     dados = request.json
@@ -82,21 +81,20 @@ def cadastrar_cliente():
     if not nome:
         return jsonify({'status': 'erro', 'mensagem': 'Nome do cliente obrigatório'}), 400
     try:
-        novo = ClienteModel(nome=nome, whatsapp=whatsapp, representante=representante)
-        db.session.add(novo)
+        db.session.add(ClienteModel(nome=nome, whatsapp=whatsapp, representante=representante))
         db.session.commit()
         return jsonify({'status': 'sucesso'})
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota API para listar dados cadastrados no disparador
+# Rota para buscar dados salvos no disparador
 @app.route('/api/dados_cadastrados')
 def dados_cadastrados():
     reps = [r.nome for r in RepresentanteModel.query.all()]
     clientes = [{'id': c.id, 'nome': c.nome, 'whatsapp': c.whatsapp, 'representante': c.representante} for c in ClienteModel.query.all()]
     return jsonify({'representantes': reps, 'clientes': clientes})
 
-# Rota para Salvar o Feedback via Formulário preenchido pelo cliente
+# Rota para Salvar o Feedback preenchido pelo cliente
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
@@ -134,7 +132,7 @@ def painel():
     representantes = RepresentanteModel.query.all()
     return render_template('painel.html', feedbacks=feedbacks, clientes=clientes, representantes=representantes)
 
-# Tela do Disparador WhatsApp e Cadastro
+# Tela do Disparador WhatsApp e Cadastros
 @app.route('/disparar')
 def disparar():
     return render_template('disparar.html')

@@ -22,7 +22,6 @@
         button.btn-zap:hover { background: #059669; }
         .resultado { margin-top: 15px; padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: none; text-align: center; }
         .resultado p { font-size: 14px; color: #166534; margin: 0 0 10px 0; word-break: break-all; }
-        hr { border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -35,7 +34,7 @@
         </div>
         <div class="form-group">
             <label for="novo_rep">Nome do Representante:</label>
-            <input type="text" id="novo_rep" placeholder="Ex: Carlos Silva">
+            <input type="text" id="novo_rep" placeholder="Ex: Marcio">
         </div>
         <button class="btn" onclick="cadastrarRepresentante()">Salvar Representante 👤</button>
     </div>
@@ -47,7 +46,7 @@
         </div>
         <div class="form-group">
             <label for="novo_cliente_nome">Nome do Cliente / Loja:</label>
-            <input type="text" id="novo_cliente_nome" placeholder="Ex: Supermercado Central">
+            <input type="text" id="novo_cliente_nome" placeholder="Ex: Panificadora Sabor">
         </div>
         <div class="form-group">
             <label for="novo_cliente_zap">WhatsApp (Apenas números com DDD):</label>
@@ -104,7 +103,6 @@
     let urlFinal = "";
     let listaClientesGlobal = [];
 
-    // Carregar dados salvos ao abrir a página
     window.onload = function() {
         carregarDados();
     };
@@ -113,14 +111,12 @@
         fetch('/api/dados_cadastrados')
         .then(res => res.json())
         .then(data => {
-            // Preencher selects de representantes
             const selectRepCliente = document.getElementById('select_rep_cliente');
             selectRepCliente.innerHTML = '<option value="">Selecione o representante...</option>';
             data.representantes.forEach(rep => {
                 selectRepCliente.innerHTML += `<option value="${rep}">${rep}</option>`;
             });
 
-            // Preencher select de clientes para envio
             const selectClienteEnvio = document.getElementById('select_cliente_envio');
             selectClienteEnvio.innerHTML = '<option value="">Escolha um cliente cadastrado...</option>';
             listaClientesGlobal = data.clientes;
@@ -142,7 +138,7 @@
         .then(res => res.json())
         .then(resposta => {
             if (resposta.status === 'sucesso') {
-                alert("Representante cadastrado e salvo com sucesso! ✅");
+                alert("Representante salvo com sucesso! ✅");
                 document.getElementById('novo_rep').value = "";
                 carregarDados();
             } else {
@@ -166,7 +162,7 @@
         .then(res => res.json())
         .then(resposta => {
             if (resposta.status === 'sucesso') {
-                alert("Cliente cadastrado e salvo com sucesso! ✅");
+                alert("Cliente salvo com sucesso! ✅");
                 document.getElementById('novo_cliente_nome').value = "";
                 document.getElementById('novo_cliente_zap').value = "";
                 carregarDados();
