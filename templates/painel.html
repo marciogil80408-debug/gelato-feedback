@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão - Gelato da Fran 🍦</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-left: 6px solid #2563eb; }
+        .header-painel h1 { margin: 0; font-size: 22px; color: #1e3a8a; }
+        .tabela-card { background: #fff; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        th { background: #f8fafc; color: #475569; padding: 12px 10px; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        tr:hover { background: #f8fafc; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-weight: 500; font-size: 12px; }
+        .badge-verde { background: #dcfce7; color: #166534; }
+        .badge-amarelo { background: #fef9c3; color: #854d0e; }
+        .badge-vermelho { background: #fee2e2; color: #991b1b; }
+        .observacoes-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; font-size: 12px; line-height: 1.4; margin-top: 4px; }
+        .obs-item { margin-bottom: 3px; }
+        .obs-item:last-child { margin-bottom: 0; }
+        .sem-obs { color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-painel">
+        <h1>📊 Painel de Avaliações - Gelato da Fran</h1>
+        <a href="/disparar" style="background: #2563eb; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">Ir para o Disparador 🚀</a>
+    </div>
+
+    <div class="tabela-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data / Hora</th>
+                    <th>Cliente</th>
+                    <th>Representante</th>
+                    <th>Atendimento</th>
+                    <th>Visitas & Suporte</th>
+                    <th>Produtos & Entrega</th>
+                    <th>Nota Geral</th>
+                    <th>Observações Específicas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if feedbacks %}
+                    {% for f in feedbacks %}
+                    <tr>
+                        <td><strong>{{ f.data_registro.strftime('%d/%m/%Y') }}</strong><br><span style="color:#64748b;">{{ f.data_registro.strftime('%H:%M') }}</span></td>
+                        <td><strong>{{ f.cliente }}</strong></td>
+                        <td>{{ f.representante }}</td>
+                        <td>⭐ {{ f.nota_representante }} / 5</td>
+                        <td>
+                            {% if 'Sim' in f.visitas_suporte %}
+                                <span class="badge badge-verde">🟢 {{ f.visitas_suporte }}</span>
+                            {% elif 'demora' in f.visitas_suporte %}
+                                <span class="badge badge-amarelo">🟡 {{ f.visitas_suporte }}</span>
+                            {% else %}
+                                <span class="badge badge-vermelho">🔴 {{ f.visitas_suporte }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if '100%' in f.entrega_status or 'Não' in f.falta_produto %}
+                                <span class="badge badge-verde">🟢 Tudo em ordem</span>
+                            {% else %}
+                                <span class="badge badge-amarelo">⚠️ {{ f.entrega_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td><strong style="font-size: 15px; color: #1e3a8a;">{{ f.nota_geral }} / 10</strong></td>
+                        <td>
+                            <div class="observacoes-box">
+                                {% set ns = namespace(tem=false) %}
+                                
+                                {% if f.obs_visitas %}
+                                    {% set ns.tem = true %}
+                                    <div class="obs-item">📌 <strong>Visitas:</strong> {{ f.obs_visitas }}</div>
+                                {% endif %}
+                                {% if f.qual_falta %}
+                                    {% set ns.tem = true %}
+                                    <div class="obs-item">🍦 <strong>Falta:</strong> {{ f.qual_falta }}</div>
+                                {% endif %}
+                                {% if f.obs_entrega %}
+                                    {% set ns.tem = true %}
+                                    <div class="obs-item">🚚 <strong>Entrega:</strong> {{ f.obs_entrega }}</div>
+                                {% endif %}
+                                {% if f.obs_geral %}
+                                    {% set ns.tem = true %}
+                                    <div class="obs-item">💡 <strong>Nota Geral:</strong> {{ f.obs_geral }}</div>
+                                {% endif %}
+                                {% if f.comentario %}
+                                    {% set ns.tem = true %}
+                                    <div class="obs-item">💬 <strong>Comentário:</strong> {{ f.comentario }}</div>
+                                {% endif %}
+                                
+                                {% if not ns.tem %}
+                                    <span class="sem-obs">Nenhuma observação extra.</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #64748b;">Nenhum feedback registrado no momento.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acompanhamento Gelato da Fran 🍦</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #eff6ff; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: #fff; max-width: 460px; width: 100%; padding: 24px; border-radius: 18px; box-shadow: 0 10px 25px rgba(30, 64, 175, 0.08); border-top: 6px solid #2563eb; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .logo-container { text-align: center; margin-bottom: 12px; }
+        .logo-img { max-width: 150px; max-height: 95px; width: auto; height: auto; object-fit: contain; border-radius: 10px; }
+        .header h2 { color: #1e3a8a; margin: 0 0 8px; font-size: 22px; }
+        .header p { color: #475569; font-size: 14px; margin: 0; line-height: 1.4; }
+        .bloco-pergunta { margin-bottom: 18px; text-align: left; background: #f8fafc; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .titulo-pergunta { font-weight: 600; color: #1e293b; font-size: 15px; margin-bottom: 10px; display: block; line-height: 1.35; }
+        .estrelas { display: flex; justify-content: center; gap: 12px; font-size: 38px; cursor: pointer; user-select: none; }
+        .estrela { color: #cbd5e1; transition: transform 0.15s, color 0.15s; }
+        .estrela.ativa { color: #f59e0b; transform: scale(1.1); }
+        .opcoes-grupo { display: flex; flex-direction: column; gap: 8px; }
+        .opcao-btn { padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; font-size: 14px; font-weight: 500; color: #334155; cursor: pointer; text-align: left; transition: 0.15s; }
+        .opcao-btn.ativa { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: 600; }
+        .campo-extra { margin-top: 10px; display: none; }
+        .campo-extra input { width: 100%; padding: 11px; border: 1px solid #93c5fd; border-radius: 8px; font-size: 14px; background: #eff6ff; outline: none; }
+        .notas-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .nota-btn { padding: 11px 0; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; font-weight: bold; font-size: 15px; cursor: pointer; color: #334155; text-align: center; transition: 0.15s; }
+        .nota-btn.ativa { background: #10b981; color: white; border-color: #10b981; transform: scale(1.05); }
+        textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; font-size: 14px; resize: none; height: 80px; outline: none; background: #fff; }
+        textarea:focus { border-color: #2563eb; }
+        button.enviar { width: 100%; background: #2563eb; color: white; border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); margin-top: 10px; }
+        button.enviar:hover { background: #1d4ed8; }
+        .oculto { display: none; }
+        .agradecimento { text-align: center; padding: 25px 10px; }
+        .agradecimento .icone { font-size: 56px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="card" id="form-card">
+    <div class="header">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" class="logo-img" onerror="this.style.display='none'">
+        </div>
+        <h2>Gelato da Fran 😊🍦</h2>
+        <p>Olá, <strong>{{ cliente }}</strong>! Sua opinião é muito importante para identificarmos o que estamos fazendo bem e o que podemos melhorar. 💙</p>
+    </div>
+    
+    <div class="bloco-pergunta">
+        <span class="titulo-pergunta">1. Como está sendo o atendimento do nosso representante ({{ representante }})?</span>
+        <div class="estrelas" id="estrelas-rep">
+            <span class="estrela" data-val="1" onclick="marcarEstrela(1)">★</span>
+            <span class="estrela" data-val="2" onclick="marcarEstrela(2)">★</span>
+            <span class="estrela" data-val="3" onclick="marcarEstrela(3)">★</span>
+            <span class="estrela" data-val="4" onclick="marcarEstrela(4)">★</span>
+            <span class="estrela" data-val="5" onclick="marcarEstrela(5)">★</span>
+        </div>
+        <div class="campo-extra" id="box-obs-rep"><input type="text" id="obs_rep" placeholder="O que aconteceu no atendimento? Conte para nós..."></div>
+    </div>
+
+    <div class="bloco-pergunta">
+        <span class="titulo-pergunta">2. Ele está realizando as visitas e dando o suporte necessário?</span>
+        <div class="opcoes-grupo" id="grupo-visitas">
+            <button type="button" class="opcao-btn" data-val="Sim, sempre presente" onclick="marcarOpcao(this, 'visitas', false)">✅ Sim, visita no prazo e dá ótimo suporte</button>
+            <button type="button" class="opcao-btn" data-val="Às vezes demora" onclick="marcarOpcao(this, 'visitas', false)">⚠️ Atende bem, mas poderia visitar mais vezes</button>
+            <button type="button" class="opcao-btn" data-val="Precisa melhorar" onclick="marcarOpcao(this, 'visitas', true)">❌ Estou sentindo falta de visitas/suporte</button>
+        </div>
+        <div class="campo-extra" id="box-obs-visitas"><input type="text" id="obs_visitas" placeholder="Qual frequência ou suporte ideal você gostaria?"></div>
+    </div>
+
+    <div class="bloco-pergunta">
+        <span class="titulo-pergunta">3. Está sentindo falta de algum produto, sabor ou informação/suporte?</span>
+        <div class="opcoes-grupo" id="grupo-falta">
+            <button type="button" class="opcao-btn" data-val="Não, tudo completo" onclick="marcarOpcao(this, 'falta', false)">🍦 Não, estou bem atendido de sabores e informações</button>
+            <button type="button" class="opcao-btn" data-val="Sim, sinto falta" onclick="marcarOpcao(this, 'falta', true)">🙋‍♂️ Sim, sinto falta de algum sabor, produto ou suporte</button>
+        </div>
+        <div class="campo-extra" id="box-qual-falta"><input type="text" id="qual_falta" placeholder="Qual sabor, produto ou suporte você gostaria?"></div>
+    </div>
+
+    <div class="bloco-pergunta">
+        <span class="titulo-pergunta">4. No momento da entrega dos pedidos, está tudo ocorrendo dentro do esperado?</span>
+        <div class="opcoes-grupo" id="grupo-entrega">
+            <button type="button" class="opcao-btn" data-val="Tudo 100% correto" onclick="marcarOpcao(this, 'entrega', false)">🚚 Tudo 100%! No prazo e produtos perfeitos</button>
+            <button type="button" class="opcao-btn" data-val="Pequenos detalhes" onclick="marcarOpcao(this, 'entrega', false)">📦 Quase tudo bem, mas houve pequeno atraso/detalhe</button>
+            <button type="button" class="opcao-btn" data-val="Teve problema" onclick="marcarOpcao(this, 'entrega', true)">🚨 Tive problema na entrega ou conservação</button>
+        </div>
+        <div class="campo-extra" id="box-obs-entrega"><input type="text" id="obs_entrega" placeholder="O que houve na entrega ou conservação?"></div>
+    </div>
+
+    <div class="bloco-pergunta">
+        <span class="titulo-pergunta">5. De modo geral, de 1 a 10, qual sua satisfação com a Gelato da Fran?</span>
+        <div class="notas-grid" id="grupo-nota-geral">
+            {% for i in range(1, 11) %}
+            <button type="button" class="nota-btn" data-val="{{ i }}" onclick="marcarNota({{ i }})">{{ i }}</button>
+            {% endfor %}
+        </div>
+        <div class="campo-extra" id="box-obs-geral"><input type="text" id="obs_geral" placeholder="O que podemos fazer para melhorar sua nota?"></div>
+    </div>
+
+    <div class="bloco-pergunta">
+        <span class="titulo-pergunta">6. Alguma sugestão, dificuldade ou ponto que mereça nossa atenção? (Opcional)</span>
+        <textarea id="comentario" placeholder="Pode ficar à vontade para nos contar aqui..."></textarea>
+    </div>
+
+    <button class="enviar" onclick="enviarFeedback()">Enviar Meu Feedback 💙</button>
+</div>
+
+<div class="card oculto" id="agradecimento-card">
+    <div class="agradecimento">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" class="logo-img" onerror="this.style.display='none'">
+        </div>
+        <div class="icone">🍦💙</div>
+        <h2>Agradecemos pela parceria e confiança!</h2>
+        <p style="color:#475569; line-height:1.5;">Seu feedback já chegou para a equipe da <strong>Gelato da Fran</strong>. Estamos sempre à disposição para crescer junto com você!</p>
+    </div>
+</div>
+
+<script>
+    let notaRep = 0;
+    let visitasVal = "";
+    let faltaVal = "";
+    let entregaVal = "";
+    let notaGeralVal = 0;
+
+    function marcarEstrela(valor) {
+        notaRep = valor;
+        const estrelas = document.querySelectorAll('#estrelas-rep .estrela');
+        estrelas.forEach((est, idx) => {
+            if (idx < valor) {
+                est.classList.add('ativa');
+            } else {
+                est.classList.remove('ativa');
+            }
+        });
+        document.getElementById('box-obs-rep').style.display = (valor <= 2) ? 'block' : 'none';
+    }
+
+    function marcarOpcao(btn, tipo, mostrarCampo) {
+        const grupo = btn.parentElement;
+        grupo.querySelectorAll('.opcao-btn').forEach(b => b.classList.remove('ativa'));
+        btn.classList.add('ativa');
+
+        const val = btn.getAttribute('data-val');
+        if (tipo === 'visitas') {
+            visitasVal = val;
+            const box = document.getElementById('box-obs-visitas');
+            box.style.display = mostrarCampo ? 'block' : 'none';
+        } else if (tipo === 'falta') {
+            faltaVal = val;
+            const box = document.getElementById('box-qual-falta');
+            box.style.display = mostrarCampo ? 'block' : 'none';
+        } else if (tipo === 'entrega') {
+            entregaVal = val;
+            const box = document.getElementById('box-obs-entrega');
+            box.style.display = mostrarCampo ? 'block' : 'none';
+        }
+    }
+
+    function marcarNota(valor) {
+        notaGeralVal = valor;
+        document.querySelectorAll('#grupo-nota-geral .nota-btn').forEach(b => {
+            if (parseInt(b.getAttribute('data-val')) === valor) {
+                b.classList.add('ativa');
+            } else {
+                b.classList.remove('ativa');
+            }
+        });
+        document.getElementById('box-obs-geral').style.display = (valor <= 6) ? 'block' : 'none';
+    }
+
+    function enviarFeedback() {
+        if (!notaRep || !visitasVal || !faltaVal || !entregaVal || !notaGeralVal) {
+            alert("Por gentileza, marque uma opção em cada uma das perguntas rápidas antes de enviar! 😊");
+            return;
+        }
+
+        let observacoes = [];
+        let r1 = document.getElementById('obs_rep').value;
+        let r2 = document.getElementById('obs_visitas').value;
+        let r3 = document.getElementById('qual_falta').value;
+        let r4 = document.getElementById('obs_entrega').value;
+        let r5 = document.getElementById('obs_geral').value;
+        let com = document.getElementById('comentario').value;
+
+        if (r1) observacoes.push("Obs. Rep: " + r1);
+        if (r2) observacoes.push("Obs. Visitas: " + r2);
+        if (r3) observacoes.push("Qual falta: " + r3);
+        if (r4) observacoes.push("Obs. Entrega: " + r4);
+        if (r5) observacoes.push("Obs. Nota Geral: " + r5);
+
+        let comentarioFinal = observacoes.join(" | ") + (com ? " - " + com : "");
+
+        fetch('/salvar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                representante: "{{ representante }}",
+                cliente: "{{ cliente }}",
+                nota_representante: notaRep,
+                visitas_suporte: visitasVal,
+                falta_produto: faltaVal,
+                qual_falta: r3,
+                entrega_status: entregaVal,
+                nota_geral: notaGeralVal,
+                comentario: comentarioFinal
+            })
+        })
+        .then(res => res.json())
+        .then(resposta => {
+            if (resposta.status === 'sucesso') {
+                document.getElementById('form-card').classList.add('oculto');
+                document.getElementById('agradecimento-card').classList.remove('oculto');
+                window.scrollTo(0, 0);
+            } else {
+                alert("Erro ao salvar: " + (resposta.mensagem || "tente novamente"));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erro de conexão ao enviar o feedback.");
+        });
+    }
+</script>
+</body>
+</html>
