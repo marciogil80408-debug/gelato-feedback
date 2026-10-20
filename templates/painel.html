@@ -21,7 +21,7 @@
         
         /* Barra de Filtros Inteligentes */
         .card-filtros { background: #fff; padding: 15px 20px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
-        .filtro-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
+        .filtro-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 180px; }
         .filtro-group label { font-size: 12px; font-weight: 600; color: #475569; }
         .filtro-group select, .filtro-group input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; background: #f8fafc; }
         .filtro-group select:focus, .filtro-group input:focus { border-color: #2563eb; background: #fff; }
@@ -60,7 +60,7 @@
         </div>
     </div>
 
-    <!-- BARRA DE FILTROS INTELIGENTES -->
+    <!-- BARRA DE FILTROS INTELIGENTES (COM DATAS, REPRESENTANTE, ESTADO E BUSCA) -->
     <div class="card-filtros">
         <div class="filtro-group">
             <label for="filtroRep">Filtrar por Representante:</label>
@@ -80,6 +80,14 @@
             </select>
         </div>
         <div class="filtro-group">
+            <label for="filtroDataInicio">Data Inicial:</label>
+            <input type="date" id="filtroDataInicio" onchange="aplicarFiltros()">
+        </div>
+        <div class="filtro-group">
+            <label for="filtroDataFim">Data Final:</label>
+            <input type="date" id="filtroDataFim" onchange="aplicarFiltros()">
+        </div>
+        <div class="filtro-group" style="flex: 2; min-width: 250px;">
             <label for="filtroBusca">Buscar Cliente / Loja:</label>
             <input type="text" id="filtroBusca" placeholder="Digite o nome da loja..." onkeyup="aplicarFiltros()">
         </div>
@@ -116,7 +124,7 @@
             </thead>
             <tbody>
                 {% for f in feedbacks %}
-                <tr data-representante="{{ f.representante }}" data-cliente="{{ f.cliente }}">
+                <tr data-id="{{ f.id }}" data-representante="{{ f.representante }}" data-cliente="{{ f.cliente }}" data-data="{{ f.data_registro.strftime('%Y-%m-%d') if f.data_registro else '' }}">
                     <td>{{ f.data_registro.strftime('%d/%m/%Y %H:%M') if f.data_registro else '-' }}</td>
                     <td><strong>{{ f.cliente }}</strong></td>
                     <td>{{ f.representante }}</td>
@@ -157,10 +165,12 @@
     const feedbacksData = [
         {% for f in feedbacks %}
         {
+            id: {{ f.id }},
             representante: {{ f.representante | tojson }},
             cliente: {{ f.cliente | tojson }},
             entrega: {{ (f.entrega_status or 'Não Informado') | tojson }},
-            notaGeral: {{ f.nota_geral or 0 }}
+            notaGeral: {{ f.nota_geral or 0 }},
+            dataReg: {{ (f.data_registro.strftime('%Y-%m-%d') if f.data_registro else '') | tojson }}
         },
         {% endfor %}
     ];
@@ -223,6 +233,8 @@
     function aplicarFiltros() {
         const repFiltro = document.getElementById('filtroRep').value;
         const estadoFiltro = document.getElementById('filtroEstado').value;
+        const dataInicio = document.getElementById('filtroDataInicio').value;
+        const dataFim = document.getElementById('filtroDataFim').value;
         const buscaFiltro = document.getElementById('filtroBusca').value.toLowerCase();
 
         const linhas = document.querySelectorAll('#tabelaFeedbacks tbody tr');
@@ -231,16 +243,22 @@
         linhas.forEach(linha => {
             if (linha.cells.length === 1) return;
 
+            const id = linha.getAttribute('data-id');
             const rep = linha.getAttribute('data-representante');
             const cliente = linha.getAttribute('data-cliente');
+            const dataReg = linha.getAttribute('data-data');
 
             let matchRep = !repFiltro || rep === repFiltro;
             let matchEstado = !estadoFiltro || cliente.includes(estadoFiltro);
             let matchBusca = !buscaFiltro || cliente.toLowerCase().includes(buscaFiltro);
+            
+            let matchData = true;
+            if (dataInicio && dataReg < dataInicio) matchData = false;
+            if (dataFim && dataReg > dataFim) matchData = false;
 
-            if (matchRep && matchEstado && matchBusca) {
+            if (matchRep && matchEstado && matchBusca && matchData) {
                 linha.style.display = '';
-                const itemOriginal = feedbacksData.find(f => f.representante === rep && f.cliente === cliente);
+                const itemOriginal = feedbacksData.find(f => f.id == id);
                 if (itemOriginal) dadosFiltrados.push(itemOriginal);
             } else {
                 linha.style.display = 'none';
