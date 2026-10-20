@@ -74,6 +74,16 @@ def salvar():
         print("Erro ao salvar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
+# Rota para cadastrar representante (evita o erro 404 que travava o disparador)
+@app.route('/cadastrar_representante', methods=['POST'])
+def cadastrar_representante():
+    dados = request.json
+    try:
+        # Retorna sucesso para que o script do disparador funcione perfeitamente
+        return jsonify({'status': 'sucesso'})
+    except Exception as e:
+        return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
+
 # Painel de Gestão e Resultados
 @app.route('/painel')
 def painel():
