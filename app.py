@@ -60,7 +60,6 @@ with app.app_context():
         tables = inspector.get_table_names()
         
         with db.engine.connect() as conn:
-            # Checa tabela feedback
             if 'feedback' in tables:
                 col_fb = [c['name'] for c in inspector.get_columns('feedback')]
                 colunas_fb = [
@@ -75,7 +74,6 @@ with app.app_context():
                         conn.execute(sa.text(f'ALTER TABLE feedback ADD COLUMN {col_nome} {col_tipo}'))
                         conn.commit()
 
-            # Checa tabela cliente_model para rotas (cidade e estado)
             if 'cliente_model' in tables:
                 col_cl = [c['name'] for c in inspector.get_columns('cliente_model')]
                 if 'cidade' not in col_cl:
@@ -150,7 +148,7 @@ def dados_cadastrados():
     } for c in ClienteModel.query.all()]
     return jsonify({'representantes': reps, 'clientes': clientes})
 
-# Rota para Salvar o Feedback
+# Rota para Salvar o Feedback (Horário de Brasília Exato)
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
