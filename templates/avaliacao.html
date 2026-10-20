@@ -174,22 +174,6 @@
             return;
         }
 
-        let observacoes = [];
-        let r1 = document.getElementById('obs_rep').value;
-        let r2 = document.getElementById('obs_visitas').value;
-        let r3 = document.getElementById('qual_falta').value;
-        let r4 = document.getElementById('obs_entrega').value;
-        let r5 = document.getElementById('obs_geral').value;
-        let com = document.getElementById('comentario').value;
-
-        if (r1) observacoes.push("Obs. Rep: " + r1);
-        if (r2) observacoes.push("Obs. Visitas: " + r2);
-        if (r3) observacoes.push("Qual falta: " + r3);
-        if (r4) observacoes.push("Obs. Entrega: " + r4);
-        if (r5) observacoes.push("Obs. Nota Geral: " + r5);
-
-        let comentarioFinal = observacoes.join(" | ") + (com ? " - " + com : "");
-
         fetch('/salvar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -198,11 +182,14 @@
                 cliente: "{{ cliente }}",
                 nota_representante: notaRep,
                 visitas_suporte: visitasVal,
+                obs_visitas: document.getElementById('obs_visitas').value || '',
                 falta_produto: faltaVal,
-                qual_falta: r3,
+                qual_falta: document.getElementById('qual_falta').value || '',
                 entrega_status: entregaVal,
+                obs_entrega: document.getElementById('obs_entrega').value || '',
                 nota_geral: notaGeralVal,
-                comentario: comentarioFinal
+                obs_geral: document.getElementById('obs_geral').value || '',
+                comentario: document.getElementById('comentario').value || ''
             })
         })
         .then(res => res.json())
