@@ -43,7 +43,7 @@ def avaliacao():
     cliente = request.args.get('cliente', 'Cliente')
     return render_template('avaliacao.html', representante=representante, cliente=cliente)
 
-# Rota para Cadastrar/Gerar o Link pelo Representante
+# Rota para Cadastrar o Representante e Cliente (Disparador)
 @app.route('/cadastrar_representante', methods=['POST'])
 def cadastrar_representante():
     dados = request.json
@@ -51,16 +51,10 @@ def cadastrar_representante():
         fuso_br = pytz.timezone('America/Sao_Paulo')
         agora_brasil = datetime.now(fuso_br)
 
-        # Registra o início do atendimento/geração do link
         novo = Feedback(
             data_registro=agora_brasil,
             representante=dados.get('representante'),
-            cliente=dados.get('cliente'),
-            nota_representante=0,
-            visitas_suporte="Pendente",
-            falta_produto="Pendente",
-            entrega_status="Pendente",
-            nota_geral=0
+            cliente=dados.get('cliente')
         )
         db.session.add(novo)
         db.session.commit()
@@ -69,7 +63,7 @@ def cadastrar_representante():
         print("Erro ao cadastrar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Salvar o Feedback via Formulário preenchido pelo cliente
+# Rota para Salvar o Feedback preenchido pelo cliente
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
