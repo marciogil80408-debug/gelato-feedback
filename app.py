@@ -19,18 +19,23 @@ db = SQLAlchemy(app)
 
 # Tabela de Representantes Cadastrados Permanentemente
 class RepresentanteModel(db.Model):
+    __tablename__ = 'representante_model'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
 
-# Tabela de Clientes/Lojas Cadastrados Permanentemente
+# Tabela de Clientes/Lojas (Com Cidade e Estado para rotas RN/PB)
 class ClienteModel(db.Model):
+    __tablename__ = 'cliente_model'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     whatsapp = db.Column(db.String(50), nullable=True)
     representante = db.Column(db.String(100), nullable=True)
+    cidade = db.Column(db.String(100), nullable=True)
+    estado = db.Column(db.String(10), nullable=True)
 
 # Tabela de Feedbacks / Avaliações dos Clientes
 class Feedback(db.Model):
+    __tablename__ = 'feedback'
     id = db.Column(db.Integer, primary_key=True)
     data_registro = db.Column(db.DateTime, nullable=False)
     representante = db.Column(db.String(100), nullable=False)
@@ -52,20 +57,33 @@ with app.app_context():
     # SEGURANÇA AUTOMÁTICA: Adiciona colunas ausentes sem NUNCA apagar dados existentes
     try:
         inspector = sa.inspect(db.engine)
-        if 'feedback' in inspector.get_table_names():
-            columns = [c['name'] for c in inspector.get_columns('feedback')]
-            with db.engine.connect() as conn:
-                colunas_necessarias = [
+        tables = inspector.get_table_names()
+        
+        with db.engine.connect() as conn:
+            # Checa tabela feedback
+            if 'feedback' in tables:
+                col_fb = [c['name'] for c in inspector.get_columns('feedback')]
+                colunas_fb = [
                     ('obs_visitas', 'TEXT'), ('qual_falta', 'TEXT'),
                     ('obs_entrega', 'TEXT'), ('obs_geral', 'TEXT'),
                     ('comentario', 'TEXT'), ('nota_representante', 'INTEGER'),
                     ('visitas_suporte', 'VARCHAR(150)'), ('falta_produto', 'VARCHAR(150)'),
                     ('entrega_status', 'VARCHAR(150)'), ('nota_geral', 'INTEGER')
                 ]
-                for col_nome, col_tipo in colunas_necessarias:
-                    if col_nome not in columns:
+                for col_nome, col_tipo in colunas_fb:
+                    if col_nome not in col_fb:
                         conn.execute(sa.text(f'ALTER TABLE feedback ADD COLUMN {col_nome} {col_tipo}'))
                         conn.commit()
+
+            # Checa tabela cliente_model para rotas (cidade e estado)
+            if 'cliente_model' in tables:
+                col_cl = [c['name'] for c in inspector.get_columns('cliente_model')]
+                if 'cidade' not in col_cl:
+                    conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN cidade VARCHAR(100)'))
+                    conn.commit()
+                if 'estado' not in col_cl:
+                    conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN estado VARCHAR(10)'))
+                    conn.commit()
     except Exception as e:
         print("Aviso na checagem de colunas:", str(e))
 
@@ -92,17 +110,27 @@ def cadastrar_representante():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Cadastrar Cliente
+# Rota para Cadastrar Cliente (Com Cidade e Estado)
 @app.route('/api/cadastrar_cliente', methods=['POST'])
 def cadastrar_cliente():
     dados = request.json
     nome = dados.get('nome', '').strip()
     whatsapp = dados.get('whatsapp', '').strip()
     representante = dados.get('representante', '').strip()
+    cidade = dados.get('cidade', '').strip()
+    estado = dados.get('estado', '').strip()
+    
     if not nome:
         return jsonify({'status': 'erro', 'mensagem': 'Nome do cliente obrigatório'}), 400
     try:
-        db.session.add(ClienteModel(nome=nome, whatsapp=whatsapp, representante=representante))
+        novo = ClienteModel(
+            nome=nome, 
+            whatsapp=whatsapp, 
+            representante=representante,
+            cidade=cidade,
+            estado=estado
+        )
+        db.session.add(novo)
         db.session.commit()
         return jsonify({'status': 'sucesso'})
     except Exception as e:
@@ -112,15 +140,21 @@ def cadastrar_cliente():
 @app.route('/api/dados_cadastrados')
 def dados_cadastrados():
     reps = [r.nome for r in RepresentanteModel.query.all()]
-    clientes = [{'id': c.id, 'nome': c.nome, 'whatsapp': c.whatsapp, 'representante': c.representante} for c in ClienteModel.query.all()]
+    clientes = [{
+        'id': c.id, 
+        'nome': c.nome, 
+        'whatsapp': c.whatsapp, 
+        'representante': c.representante,
+        'cidade': c.cidade or 'Não informada',
+        'estado': c.estado or 'RN'
+    } for c in ClienteModel.query.all()]
     return jsonify({'representantes': reps, 'clientes': clientes})
 
-# Rota para Salvar o Feedback preenchido pelo cliente (Com fuso de Brasília corrigido)
+# Rota para Salvar o Feedback
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
     try:
-        # Fuso horário de Brasília exato, removendo o offset para salvar a hora local cravada
         fuso_br = pytz.timezone('America/Sao_Paulo')
         agora_brasil = datetime.now(fuso_br).replace(tzinfo=None)
 
@@ -146,7 +180,7 @@ def salvar():
         print("Erro ao salvar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Painel de Gestão e Resultados (Com dados para os gráficos)
+# Painel de Gestão e Resultados
 @app.route('/painel')
 def painel():
     try:

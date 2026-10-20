@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro e Disparador - Gelato da Fran 🍦</title>
+    <title>Rotas e Disparador - Gelato da Fran 🍦</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #eff6ff; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -16,6 +16,8 @@
         .form-group label { display: block; font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 6px; }
         .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; background: #f8fafc; }
         .form-group input:focus, .form-group select:focus { border-color: #2563eb; background: #fff; }
+        .row-dupla { display: flex; gap: 10px; }
+        .row-dupla .form-group { flex: 1; }
         button.btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); margin-top: 5px; transition: 0.15s; }
         button.btn:hover { background: #1d4ed8; }
         button.btn-zap { background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 12px; }
@@ -39,14 +41,27 @@
         <button class="btn" onclick="cadastrarRepresentante()">Salvar Representante 👤</button>
     </div>
 
-    <!-- CARD 2: CADASTRO DE CLIENTE / LOJA -->
+    <!-- CARD 2: CADASTRO DE CLIENTE / ROTA (RN e PB) -->
     <div class="card">
         <div class="header" style="margin-bottom: 12px;">
-            <h2>2. Cadastrar Cliente / Loja</h2>
+            <h2>2. Cadastrar Cliente e Rota</h2>
         </div>
         <div class="form-group">
             <label for="novo_cliente_nome">Nome do Cliente / Loja:</label>
             <input type="text" id="novo_cliente_nome" placeholder="Ex: Panificadora Sabor">
+        </div>
+        <div class="row-dupla">
+            <div class="form-group">
+                <label for="novo_cliente_cidade">Cidade:</label>
+                <input type="text" id="novo_cliente_cidade" placeholder="Ex: Caicó">
+            </div>
+            <div class="form-group">
+                <label for="novo_cliente_estado">Estado (Rota):</label>
+                <select id="novo_cliente_estado">
+                    <option value="RN">RN (Rio Grande do Norte)</option>
+                    <option value="PB">PB (Paraíba)</option>
+                </select>
+            </div>
         </div>
         <div class="form-group">
             <label for="novo_cliente_zap">WhatsApp (Apenas números com DDD):</label>
@@ -58,18 +73,18 @@
                 <option value="">Selecione o representante...</option>
             </select>
         </div>
-        <button class="btn" onclick="cadastrarCliente()">Salvar Cliente 🏢</button>
+        <button class="btn" onclick="cadastrarCliente()">Salvar Cliente na Rota 🏢</button>
     </div>
 
     <!-- CARD 3: DISPARADOR WHATSAPP -->
     <div class="card">
         <div class="header">
             <h2>3. Disparador WhatsApp 🚀</h2>
-            <p>Selecione o cliente cadastrado para gerar o link e enviar.</p>
+            <p>Selecione o cliente por cidade/estado para enviar.</p>
         </div>
 
         <div class="form-group">
-            <label for="select_cliente_envio">Selecione o Cliente:</label>
+            <label for="select_cliente_envio">Selecione o Cliente (Cidade - Estado):</label>
             <select id="select_cliente_envio" onchange="preencherDadosEnvio()">
                 <option value="">Escolha um cliente cadastrado...</option>
             </select>
@@ -81,7 +96,7 @@
         </div>
 
         <div class="form-group">
-            <label for="cliente_envio">Cliente / Loja:</label>
+            <label for="cliente_envio">Cliente / Loja (Local):</label>
             <input type="text" id="cliente_envio" readonly style="background: #e2e8f0;">
         </div>
 
@@ -121,7 +136,7 @@
             selectClienteEnvio.innerHTML = '<option value="">Escolha um cliente cadastrado...</option>';
             listaClientesGlobal = data.clientes;
             data.clientes.forEach(c => {
-                selectClienteEnvio.innerHTML += `<option value="${c.id}">${c.nome} (${c.representante || 'Geral'})</option>`;
+                selectClienteEnvio.innerHTML += `<option value="${c.id}">${c.nome} — ${c.cidade}/${c.estado} (${c.representante || 'Geral'})</option>`;
             });
         });
     }
@@ -149,6 +164,8 @@
 
     function cadastrarCliente() {
         const nome = document.getElementById('novo_cliente_nome').value.trim();
+        const cidade = document.getElementById('novo_cliente_cidade').value.trim();
+        const estado = document.getElementById('novo_cliente_estado').value;
         const whatsapp = document.getElementById('novo_cliente_zap').value.trim();
         const representante = document.getElementById('select_rep_cliente').value;
 
@@ -157,13 +174,20 @@
         fetch('/api/cadastrar_cliente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome: nome, whatsapp: whatsapp, representante: representante })
+            body: JSON.stringify({ 
+                nome: nome, 
+                cidade: cidade, 
+                estado: estado, 
+                whatsapp: whatsapp, 
+                representante: representante 
+            })
         })
         .then(res => res.json())
         .then(resposta => {
             if (resposta.status === 'sucesso') {
-                alert("Cliente salvo com sucesso! ✅");
+                alert("Cliente e rota salvos com sucesso! ✅");
                 document.getElementById('novo_cliente_nome').value = "";
+                document.getElementById('novo_cliente_cidade').value = "";
                 document.getElementById('novo_cliente_zap').value = "";
                 carregarDados();
             } else {
@@ -176,7 +200,7 @@
         const idCliente = document.getElementById('select_cliente_envio').value;
         const clienteObj = listaClientesGlobal.find(c => c.id == idCliente);
         if (clienteObj) {
-            document.getElementById('cliente_envio').value = clienteObj.nome;
+            document.getElementById('cliente_envio').value = `${clienteObj.nome} (${clienteObj.cidade}/${clienteObj.estado})`;
             document.getElementById('representante_envio').value = clienteObj.representante || '';
             document.getElementById('telefone_envio').value = clienteObj.whatsapp || '';
         }
@@ -184,15 +208,15 @@
 
     function gerarLink() {
         const representante = document.getElementById('representante_envio').value.trim();
-        const cliente = document.getElementById('cliente_envio').value.trim();
+        const clienteBruto = document.getElementById('cliente_envio').value.trim();
 
-        if (!representante || !cliente) {
+        if (!representante || !clienteBruto) {
             alert("Selecione um cliente cadastrado acima!");
             return;
         }
 
         const base = window.location.origin;
-        urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
+        urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(clienteBruto)}`;
         
         document.getElementById('link-gerado').innerText = urlFinal;
         document.getElementById('box-resultado').style.display = 'block';
@@ -200,10 +224,10 @@
 
     function enviarWhatsApp() {
         const telefone = document.getElementById('telefone_envio').value.trim();
-        const cliente = document.getElementById('cliente_envio').value.trim();
+        const clienteBruto = document.getElementById('cliente_envio').value.trim();
         const representante = document.getElementById('representante_envio').value.trim();
 
-        let mensagem = `Olá ${cliente}! Aqui é da Gelato da Fran 🍦. Gostaríamos muito de saber sua opinião sobre o atendimento do nosso representante ${representante}. Por favor, clique no link abaixo para avaliar rapidinho: \n\n${urlFinal}`;
+        let mensagem = `Olá! Aqui é da Gelato da Fran 🍦. Gostaríamos muito de saber sua opinião sobre o atendimento do nosso representante ${representante}. Por favor, clique no link abaixo para avaliar rapidinho: \n\n${urlFinal}`;
         
         let linkZap = `https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(mensagem)}`;
         if (!telefone) {
