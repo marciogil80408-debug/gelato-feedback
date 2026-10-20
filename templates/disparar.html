@@ -3,99 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disparador - Gelato da Fran</title>
+    <title>Disparador WhatsApp - Gelato da Fran 🍦</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background-color: #f9f9f9;}
-        .box { background: white; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2, h3 { color: #333; margin-top: 0; }
-        label { font-weight: bold; font-size: 14px; color: #555; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        button { background-color: #25D366; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #1DA851; }
-        .btn-blue { background-color: #007bff; }
-        .btn-blue:hover { background-color: #0056b3; }
-        .link-painel { display: block; text-align: center; margin-top: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #eff6ff; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: #fff; max-width: 480px; width: 100%; padding: 25px; border-radius: 18px; box-shadow: 0 10px 25px rgba(30, 64, 175, 0.08); border-top: 6px solid #2563eb; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h2 { color: #1e3a8a; margin: 0 0 8px; font-size: 22px; }
+        .header p { color: #475569; font-size: 14px; margin: 0; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; background: #f8fafc; }
+        .form-group input:focus { border-color: #2563eb; background: #fff; }
+        button.btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); margin-top: 10px; transition: 0.15s; }
+        button.btn:hover { background: #1d4ed8; }
+        button.btn-zap { background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 12px; }
+        button.btn-zap:hover { background: #059669; }
+        .resultado { margin-top: 20px; padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: none; text-align: center; }
+        .resultado p { font-size: 14px; color: #166534; margin: 0 0 10px 0; word-break: break-all; }
     </style>
 </head>
 <body>
 
-    <h2>📲 Disparador WhatsApp</h2>
-
-    <!-- 1. DISPARAR PESQUISA -->
-    <div class="box">
-        <h3>1. Gerar Link de Pesquisa</h3>
-        <label>Selecione um Cliente Cadastrado:</label>
-        <select id="cliente_selecionado">
-            <option value="">-- Escolha o cliente --</option>
-            {% for c in clientes %}
-                <option value="{{ c.nome }}" data-telefone="{{ c.telefone }}" data-rep="{{ c.representante }}">{{ c.nome }}</option>
-            {% endfor %}
-        </select>
-
-        <label>WhatsApp do Cliente:</label>
-        <input type="text" id="whatsapp_cliente" readonly style="background-color: #eee;">
-
-        <label>Representante Responsável:</label>
-        <input type="text" id="rep_cliente" readonly style="background-color: #eee;">
-
-        <button onclick="disparar()">Abrir Conversa no WhatsApp 💬</button>
+<div class="card">
+    <div class="header">
+        <h2>Disparador WhatsApp 🚀</h2>
+        <p>Gere o link de avaliação personalizado para enviar ao seu cliente.</p>
     </div>
 
-    <!-- 2. CADASTRAR NOVO CLIENTE -->
-    <div class="box">
-        <h3>2. Cadastrar Novo Cliente</h3>
-        <form action="/cadastrar_cliente" method="POST">
-            <input type="text" name="nome" placeholder="Nome do Cliente / Comércio" required>
-            <input type="text" name="telefone" placeholder="WhatsApp (apenas números, com DDD)" required>
-            <select name="representante" required>
-                <option value="">-- Atendido por qual representante? --</option>
-                {% for r in representantes %}
-                    <option value="{{ r.nome }}">{{ r.nome }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn-blue">Salvar Cliente 💾</button>
-        </form>
+    <div class="form-group">
+        <label for="representante">Nome do Representante:</label>
+        <input type="text" id="representante" placeholder="Ex: Marcio">
     </div>
 
-    <!-- 3. CADASTRAR REPRESENTANTE -->
-    <div class="box">
-        <h3>3. Cadastrar Representante</h3>
-        <form action="/cadastrar_representante" method="POST">
-            <input type="text" name="nome" placeholder="Nome do Representante" required>
-            <input type="text" name="telefone" placeholder="Telefone (Opcional)">
-            <button type="submit" class="btn-blue">Salvar Representante 💾</button>
-        </form>
+    <div class="form-group">
+        <label for="cliente">Nome do Cliente / Loja:</label>
+        <input type="text" id="cliente" placeholder="Ex: Panificadora Sabor">
     </div>
 
-    <a href="/painel" class="link-painel">← Voltar para o Painel de Resultados</a>
+    <div class="form-group">
+        <label for="telefone">WhatsApp do Cliente (Apenas números com DDD):</label>
+        <input type="text" id="telefone" placeholder="Ex: 84999999999">
+    </div>
 
-    <script>
-        // Quando escolhe o cliente, preenche o Zap e o Representante sozinho!
-        document.getElementById('cliente_selecionado').addEventListener('change', function() {
-            var selectedOption = this.options[this.selectedIndex];
-            document.getElementById('whatsapp_cliente').value = selectedOption.getAttribute('data-telefone') || '';
-            document.getElementById('rep_cliente').value = selectedOption.getAttribute('data-rep') || '';
-        });
+    <button class="btn" onclick="gerarLink()">Gerar Link de Avaliação 🔗</button>
 
-        function disparar() {
-            var cliente = document.getElementById('cliente_selecionado').value;
-            var telefone = document.getElementById('whatsapp_cliente').value;
-            var rep = document.getElementById('rep_cliente').value;
+    <div class="resultado" id="box-resultado">
+        <p id="link-gerado"></p>
+        <button class="btn btn-zap" onclick="enviarWhatsApp()">Enviar no WhatsApp 💚</button>
+    </div>
+</div>
 
-            if (!cliente || !telefone || !rep) {
-                alert("Por favor, selecione um cliente cadastrado na lista.");
-                return;
-            }
+<script>
+    let urlFinal = "";
 
-            // Limpa o telefone para garantir que o link do WhatsApp funcione
-            telefone = telefone.replace(/\D/g, '');
+    function gerarLink() {
+        const representante = document.getElementById('representante').value.trim();
+        const cliente = document.getElementById('cliente').value.trim();
 
-            var linkPesquisa = `https://gelato-feedback.onrender.com/?rep=${encodeURIComponent(rep)}&cliente=${encodeURIComponent(cliente)}`;
-            var mensagem = `Olá, somos da Gelato da Fran! Gostaríamos muito de ouvir a sua opinião sobre o nosso atendimento e produtos. É bem rápido, basta clicar no link abaixo:\n\n${linkPesquisa}`;
-            
-            var urlWhatsApp = `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`;
-            window.open(urlWhatsApp, '_blank');
+        if (!representante || !cliente) {
+            alert("Por favor, preencha o nome do representante e do cliente!");
+            return;
         }
-    </script>
+
+        // Envia requisição com o Content-Type correto para evitar erro 415/Unsupported Media Type
+        fetch('/cadastrar_representante', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ representante: representante, cliente: cliente })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Gera o link codificando os textos para evitar quebrar na URL
+            const base = window.location.origin;
+            urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
+            
+            document.getElementById('link-gerado').innerText = urlFinal;
+            document.getElementById('box-resultado').style.display = 'block';
+        })
+        .catch(err => {
+            console.error(err);
+            // Mesmo se houver falha de rede, gera o link para não travar o usuário
+            const base = window.location.origin;
+            urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
+            document.getElementById('link-gerado').innerText = urlFinal;
+            document.getElementById('box-resultado').style.display = 'block';
+        });
+    }
+
+    function enviarWhatsApp() {
+        const telefone = document.getElementById('telefone').value.trim();
+        const cliente = document.getElementById('cliente').value.trim();
+        const representante = document.getElementById('representante').value.trim();
+
+        let mensagem = `Olá ${cliente}! Aqui é da Gelato da Fran 🍦. Gostaríamos muito de saber sua opinião sobre o atendimento do nosso representante ${representante}. Por favor, clique no link abaixo para avaliar rapidinho: \n\n${urlFinal}`;
+        
+        let linkZap = `https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(mensagem)}`;
+        if (!telefone) {
+            linkZap = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+        }
+
+        window.open(linkZap, '_blank');
+    }
+</script>
+
 </body>
 </html>
