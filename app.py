@@ -4,7 +4,6 @@ import pytz
 from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
 from flask_sqlalchemy import SQLAlchemy
 import sqlalchemy as sa
-import csv
 
 app = Flask(__name__)
 
@@ -179,6 +178,12 @@ def salvar():
         print("Erro ao salvar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
+# Função auxiliar segura para formatar CSV para Excel
+def escape_csv(val):
+    val_str = str(val or '')
+    val_str = val_str.replace('"', '""').replace('\n', ' ')
+    return f'"{val_str}"'
+
 # Rota para Exportar Relatório em CSV (Compatível com Excel)
 @app.route('/exportar_csv')
 def exportar_csv():
@@ -195,16 +200,16 @@ def exportar_csv():
                     f.representante or '',
                     str(f.nota_representante or ''),
                     f.visitas_suporte or '',
-                    (f.obs_visitas or '').replace('\n', ' '),
+                    f.obs_visitas or '',
                     f.falta_produto or '',
-                    (f.qual_falta or '').replace('\n', ' '),
+                    f.qual_falta or '',
                     f.entrega_status or '',
-                    (f.obs_entrega or '').replace('\n', ' '),
+                    f.obs_entrega or '',
                     str(f.nota_geral or ''),
-                    (f.obs_geral or '').replace('\n', ' '),
-                    (f.comentario or '').replace('\n', ' ')
+                    f.obs_geral or '',
+                    f.comentario or ''
                 ]
-                yield ';'.join([f'"{val.replace('"', '""')}"' for val in linha]) + '\n'
+                yield ';'.join([escape_csv(val) for val in linha]) + '\n'
 
         return Response(generate(), mimetype='text/csv; charset=utf-8', headers={"Content-Disposition": "attachment; filename=relatorio_gelato_da_fran.csv"})
     except Exception as e:
