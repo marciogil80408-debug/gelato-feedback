@@ -115,13 +115,14 @@ def dados_cadastrados():
     clientes = [{'id': c.id, 'nome': c.nome, 'whatsapp': c.whatsapp, 'representante': c.representante} for c in ClienteModel.query.all()]
     return jsonify({'representantes': reps, 'clientes': clientes})
 
-# Rota para Salvar o Feedback preenchido pelo cliente
+# Rota para Salvar o Feedback preenchido pelo cliente (Com fuso de Brasília corrigido)
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
     try:
+        # Fuso horário de Brasília exato, removendo o offset para salvar a hora local cravada
         fuso_br = pytz.timezone('America/Sao_Paulo')
-        agora_brasil = datetime.now(fuso_br)
+        agora_brasil = datetime.now(fuso_br).replace(tzinfo=None)
 
         novo = Feedback(
             data_registro=agora_brasil,
