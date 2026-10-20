@@ -16,7 +16,19 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Tabela do Banco de Dados (Com observações separadas e fuso horário)
+# Tabela de Representantes Salvos
+class RepresentanteModel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
+
+# Tabela de Clientes Salvos
+class ClienteModel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    whatsapp = db.Column(db.String(50), nullable=True)
+    representante = db.Column(db.String(100), nullable=True)
+
+# Tabela de Feedbacks / Avaliações
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data_registro = db.Column(db.DateTime, nullable=False)
@@ -43,27 +55,48 @@ def avaliacao():
     cliente = request.args.get('cliente', 'Cliente')
     return render_template('avaliacao.html', representante=representante, cliente=cliente)
 
-# Rota para Cadastrar o Representante e Cliente (Disparador)
-@app.route('/cadastrar_representante', methods=['POST'])
+# Rota API para Cadastrar Representante
+@app.route('/api/cadastrar_representante', methods=['POST'])
 def cadastrar_representante():
     dados = request.json
+    nome = dados.get('nome', '').strip()
+    if not nome:
+        return jsonify({'status': 'erro', 'mensagem': 'Nome obrigatório'}), 400
     try:
-        fuso_br = pytz.timezone('America/Sao_Paulo')
-        agora_brasil = datetime.now(fuso_br)
+        existe = RepresentanteModel.query.filter_by(nome=nome).first()
+        if not existe:
+            novo = RepresentanteModel(nome=nome)
+            db.session.add(novo)
+            db.session.commit()
+        return jsonify({'status': 'sucesso'})
+    except Exception as e:
+        return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-        novo = Feedback(
-            data_registro=agora_brasil,
-            representante=dados.get('representante'),
-            cliente=dados.get('cliente')
-        )
+# Rota API para Cadastrar Cliente
+@app.route('/api/cadastrar_cliente', methods=['POST'])
+def cadastrar_cliente():
+    dados = request.json
+    nome = dados.get('nome', '').strip()
+    whatsapp = dados.get('whatsapp', '').strip()
+    representante = dados.get('representante', '').strip()
+    if not nome:
+        return jsonify({'status': 'erro', 'mensagem': 'Nome do cliente obrigatório'}), 400
+    try:
+        novo = ClienteModel(nome=nome, whatsapp=whatsapp, representante=representante)
         db.session.add(novo)
         db.session.commit()
         return jsonify({'status': 'sucesso'})
     except Exception as e:
-        print("Erro ao cadastrar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Salvar o Feedback preenchido pelo cliente
+# Rota API para listar dados cadastrados no disparador
+@app.route('/api/dados_cadastrados')
+def dados_cadastrados():
+    reps = [r.nome for r in RepresentanteModel.query.all()]
+    clientes = [{'id': c.id, 'nome': c.nome, 'whatsapp': c.whatsapp, 'representante': c.representante} for c in ClienteModel.query.all()]
+    return jsonify({'representantes': reps, 'clientes': clientes})
+
+# Rota para Salvar o Feedback via Formulário preenchido pelo cliente
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
@@ -97,9 +130,11 @@ def salvar():
 @app.route('/painel')
 def painel():
     feedbacks = Feedback.query.order_by(Feedback.id.desc()).all()
-    return render_template('painel.html', feedbacks=feedbacks)
+    clientes = ClienteModel.query.all()
+    representantes = RepresentanteModel.query.all()
+    return render_template('painel.html', feedbacks=feedbacks, clientes=clientes, representantes=representantes)
 
-# Tela do Disparador WhatsApp
+# Tela do Disparador WhatsApp e Cadastro
 @app.route('/disparar')
 def disparar():
     return render_template('disparar.html')

@@ -3,98 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disparador WhatsApp - Gelato da Fran 🍦</title>
+    <title>Cadastro e Disparador - Gelato da Fran 🍦</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #eff6ff; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: #fff; max-width: 480px; width: 100%; padding: 25px; border-radius: 18px; box-shadow: 0 10px 25px rgba(30, 64, 175, 0.08); border-top: 6px solid #2563eb; }
+        .container { max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: #fff; padding: 25px; border-radius: 18px; box-shadow: 0 10px 25px rgba(30, 64, 175, 0.08); border-top: 6px solid #2563eb; }
         .header { text-align: center; margin-bottom: 20px; }
         .header h2 { color: #1e3a8a; margin: 0 0 8px; font-size: 22px; }
         .header p { color: #475569; font-size: 14px; margin: 0; }
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 6px; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; background: #f8fafc; }
-        .form-group input:focus { border-color: #2563eb; background: #fff; }
-        button.btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); margin-top: 10px; transition: 0.15s; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; background: #f8fafc; }
+        .form-group input:focus, .form-group select:focus { border-color: #2563eb; background: #fff; }
+        button.btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); margin-top: 5px; transition: 0.15s; }
         button.btn:hover { background: #1d4ed8; }
         button.btn-zap { background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 12px; }
         button.btn-zap:hover { background: #059669; }
-        .resultado { margin-top: 20px; padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: none; text-align: center; }
+        .resultado { margin-top: 15px; padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: none; text-align: center; }
         .resultado p { font-size: 14px; color: #166534; margin: 0 0 10px 0; word-break: break-all; }
+        hr { border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="header">
-        <h2>Disparador WhatsApp 🚀</h2>
-        <p>Cadastre o representante e o cliente para gerar o link de avaliação.</p>
+<div class="container">
+    <!-- CARD 1: CADASTRO DE REPRESENTANTE -->
+    <div class="card">
+        <div class="header" style="margin-bottom: 12px;">
+            <h2>1. Cadastrar Representante</h2>
+        </div>
+        <div class="form-group">
+            <label for="novo_rep">Nome do Representante:</label>
+            <input type="text" id="novo_rep" placeholder="Ex: Carlos Silva">
+        </div>
+        <button class="btn" onclick="cadastrarRepresentante()">Salvar Representante 👤</button>
     </div>
 
-    <div class="form-group">
-        <label for="representante">Nome do Representante:</label>
-        <input type="text" id="representante" placeholder="Ex: Marcio">
+    <!-- CARD 2: CADASTRO DE CLIENTE / LOJA -->
+    <div class="card">
+        <div class="header" style="margin-bottom: 12px;">
+            <h2>2. Cadastrar Cliente / Loja</h2>
+        </div>
+        <div class="form-group">
+            <label for="novo_cliente_nome">Nome do Cliente / Loja:</label>
+            <input type="text" id="novo_cliente_nome" placeholder="Ex: Supermercado Central">
+        </div>
+        <div class="form-group">
+            <label for="novo_cliente_zap">WhatsApp (Apenas números com DDD):</label>
+            <input type="text" id="novo_cliente_zap" placeholder="Ex: 84999999999">
+        </div>
+        <div class="form-group">
+            <label for="select_rep_cliente">Representante Responsável:</label>
+            <select id="select_rep_cliente">
+                <option value="">Selecione o representante...</option>
+            </select>
+        </div>
+        <button class="btn" onclick="cadastrarCliente()">Salvar Cliente 🏢</button>
     </div>
 
-    <div class="form-group">
-        <label for="cliente">Nome do Cliente / Loja:</label>
-        <input type="text" id="cliente" placeholder="Ex: Panificadora Sabor">
-    </div>
+    <!-- CARD 3: DISPARADOR WHATSAPP -->
+    <div class="card">
+        <div class="header">
+            <h2>3. Disparador WhatsApp 🚀</h2>
+            <p>Selecione o cliente cadastrado para gerar o link e enviar.</p>
+        </div>
 
-    <div class="form-group">
-        <label for="telefone">WhatsApp do Cliente (Apenas números com DDD):</label>
-        <input type="text" id="telefone" placeholder="Ex: 84999999999">
-    </div>
+        <div class="form-group">
+            <label for="select_cliente_envio">Selecione o Cliente:</label>
+            <select id="select_cliente_envio" onchange="preencherDadosEnvio()">
+                <option value="">Escolha um cliente cadastrado...</option>
+            </select>
+        </div>
 
-    <button class="btn" onclick="gerarLink()">Cadastrar e Gerar Link 🔗</button>
+        <div class="form-group">
+            <label for="representante_envio">Representante:</label>
+            <input type="text" id="representante_envio" readonly style="background: #e2e8f0;">
+        </div>
 
-    <div class="resultado" id="box-resultado">
-        <p id="link-gerado"></p>
-        <button class="btn btn-zap" onclick="enviarWhatsApp()">Enviar no WhatsApp 💚</button>
+        <div class="form-group">
+            <label for="cliente_envio">Cliente / Loja:</label>
+            <input type="text" id="cliente_envio" readonly style="background: #e2e8f0;">
+        </div>
+
+        <div class="form-group">
+            <label for="telefone_envio">WhatsApp:</label>
+            <input type="text" id="telefone_envio" placeholder="Ex: 84999999999">
+        </div>
+
+        <button class="btn" onclick="gerarLink()">Gerar Link de Avaliação 🔗</button>
+
+        <div class="resultado" id="box-resultado">
+            <p id="link-gerado"></p>
+            <button class="btn btn-zap" onclick="enviarWhatsApp()">Enviar no WhatsApp 💚</button>
+        </div>
     </div>
 </div>
 
 <script>
     let urlFinal = "";
+    let listaClientesGlobal = [];
 
-    function gerarLink() {
-        const representante = document.getElementById('representante').value.trim();
-        const cliente = document.getElementById('cliente').value.trim();
+    // Carregar dados salvos ao abrir a página
+    window.onload = function() {
+        carregarDados();
+    };
 
-        if (!representante || !cliente) {
-            alert("Por favor, preencha o nome do representante e do cliente!");
-            return;
-        }
-
-        fetch('/cadastrar_representante', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ representante: representante, cliente: cliente })
-        })
+    function carregarDados() {
+        fetch('/api/dados_cadastrados')
         .then(res => res.json())
         .then(data => {
-            const base = window.location.origin;
-            urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
-            
-            document.getElementById('link-gerado').innerText = urlFinal;
-            document.getElementById('box-resultado').style.display = 'block';
-        })
-        .catch(err => {
-            console.error(err);
-            const base = window.location.origin;
-            urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
-            document.getElementById('link-gerado').innerText = urlFinal;
-            document.getElementById('box-resultado').style.display = 'block';
+            // Preencher selects de representantes
+            const selectRepCliente = document.getElementById('select_rep_cliente');
+            selectRepCliente.innerHTML = '<option value="">Selecione o representante...</option>';
+            data.representantes.forEach(rep => {
+                selectRepCliente.innerHTML += `<option value="${rep}">${rep}</option>`;
+            });
+
+            // Preencher select de clientes para envio
+            const selectClienteEnvio = document.getElementById('select_cliente_envio');
+            selectClienteEnvio.innerHTML = '<option value="">Escolha um cliente cadastrado...</option>';
+            listaClientesGlobal = data.clientes;
+            data.clientes.forEach(c => {
+                selectClienteEnvio.innerHTML += `<option value="${c.id}">${c.nome} (${c.representante || 'Geral'})</option>`;
+            });
         });
     }
 
+    function cadastrarRepresentante() {
+        const nome = document.getElementById('novo_rep').value.trim();
+        if (!nome) { alert("Digite o nome do representante!"); return; }
+
+        fetch('/api/cadastrar_representante', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome: nome })
+        })
+        .then(res => res.json())
+        .then(resposta => {
+            if (resposta.status === 'sucesso') {
+                alert("Representante cadastrado e salvo com sucesso! ✅");
+                document.getElementById('novo_rep').value = "";
+                carregarDados();
+            } else {
+                alert("Erro: " + resposta.mensagem);
+            }
+        });
+    }
+
+    function cadastrarCliente() {
+        const nome = document.getElementById('novo_cliente_nome').value.trim();
+        const whatsapp = document.getElementById('novo_cliente_zap').value.trim();
+        const representante = document.getElementById('select_rep_cliente').value;
+
+        if (!nome) { alert("Digite o nome do cliente/loja!"); return; }
+
+        fetch('/api/cadastrar_cliente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome: nome, whatsapp: whatsapp, representante: representante })
+        })
+        .then(res => res.json())
+        .then(resposta => {
+            if (resposta.status === 'sucesso') {
+                alert("Cliente cadastrado e salvo com sucesso! ✅");
+                document.getElementById('novo_cliente_nome').value = "";
+                document.getElementById('novo_cliente_zap').value = "";
+                carregarDados();
+            } else {
+                alert("Erro: " + resposta.mensagem);
+            }
+        });
+    }
+
+    function preencherDadosEnvio() {
+        const idCliente = document.getElementById('select_cliente_envio').value;
+        const clienteObj = listaClientesGlobal.find(c => c.id == idCliente);
+        if (clienteObj) {
+            document.getElementById('cliente_envio').value = clienteObj.nome;
+            document.getElementById('representante_envio').value = clienteObj.representante || '';
+            document.getElementById('telefone_envio').value = clienteObj.whatsapp || '';
+        }
+    }
+
+    function gerarLink() {
+        const representante = document.getElementById('representante_envio').value.trim();
+        const cliente = document.getElementById('cliente_envio').value.trim();
+
+        if (!representante || !cliente) {
+            alert("Selecione um cliente cadastrado acima!");
+            return;
+        }
+
+        const base = window.location.origin;
+        urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(cliente)}`;
+        
+        document.getElementById('link-gerado').innerText = urlFinal;
+        document.getElementById('box-resultado').style.display = 'block';
+    }
+
     function enviarWhatsApp() {
-        const telefone = document.getElementById('telefone').value.trim();
-        const cliente = document.getElementById('cliente').value.trim();
-        const representante = document.getElementById('representante').value.trim();
+        const telefone = document.getElementById('telefone_envio').value.trim();
+        const cliente = document.getElementById('cliente_envio').value.trim();
+        const representante = document.getElementById('representante_envio').value.trim();
 
         let mensagem = `Olá ${cliente}! Aqui é da Gelato da Fran 🍦. Gostaríamos muito de saber sua opinião sobre o atendimento do nosso representante ${representante}. Por favor, clique no link abaixo para avaliar rapidinho: \n\n${urlFinal}`;
         
