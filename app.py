@@ -46,6 +46,7 @@ class Feedback(db.Model):
     comentario = db.Column(db.Text, nullable=True)
 
 with app.app_context():
+    # SEGURO: Apenas cria tabelas novas se não existirem, NUNCA apaga dados existentes!
     db.create_all()
 
 # Página de Avaliação do Cliente
@@ -124,7 +125,7 @@ def salvar():
         print("Erro ao salvar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Painel de Gestão e Resultados
+# Painel de Gestão e Resultados (Com dados para os gráficos)
 @app.route('/painel')
 def painel():
     feedbacks = Feedback.query.order_by(Feedback.id.desc()).all()
