@@ -1,9 +1,10 @@
 import os
 from datetime import datetime
 import pytz
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
 from flask_sqlalchemy import SQLAlchemy
 import sqlalchemy as sa
+import csv
 
 app = Flask(__name__)
 
@@ -177,6 +178,37 @@ def salvar():
     except Exception as e:
         print("Erro ao salvar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
+
+# Rota para Exportar Relatório em CSV (Compatível com Excel)
+@app.route('/exportar_csv')
+def exportar_csv():
+    try:
+        feedbacks = Feedback.query.order_by(Feedback.id.desc()).all()
+        
+        def generate():
+            yield 'ID;Data/Hora;Cliente/Loja;Representante;Nota Rep.;Suporte/Visitas;Obs Visitas;Falta Produto;Qual Falta;Status Entrega;Obs Entrega;Nota Geral;Obs Geral;Comentario\n'
+            for f in feedbacks:
+                linha = [
+                    str(f.id),
+                    f.data_registro.strftime('%d/%m/%Y %H:%M') if f.data_registro else '',
+                    f.cliente or '',
+                    f.representante or '',
+                    str(f.nota_representante or ''),
+                    f.visitas_suporte or '',
+                    (f.obs_visitas or '').replace('\n', ' '),
+                    f.falta_produto or '',
+                    (f.qual_falta or '').replace('\n', ' '),
+                    f.entrega_status or '',
+                    (f.obs_entrega or '').replace('\n', ' '),
+                    str(f.nota_geral or ''),
+                    (f.obs_geral or '').replace('\n', ' '),
+                    (f.comentario or '').replace('\n', ' ')
+                ]
+                yield ';'.join([f'"{val.replace('"', '""')}"' for val in linha]) + '\n'
+
+        return Response(generate(), mimetype='text/csv; charset=utf-8', headers={"Content-Disposition": "attachment; filename=relatorio_gelato_da_fran.csv"})
+    except Exception as e:
+        return str(e), 500
 
 # Painel de Gestão e Resultados
 @app.route('/painel')

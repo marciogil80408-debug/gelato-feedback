@@ -12,12 +12,15 @@
         .container { max-width: 1200px; margin: 0 auto; }
         
         /* Cabeçalho com Logomarca Oficial */
-        .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-left: 6px solid #2563eb; }
+        .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-left: 6px solid #2563eb; flex-wrap: wrap; gap: 15px; }
         .logo-area { display: flex; align-items: center; gap: 15px; }
         .header-painel h1 { margin: 0; font-size: 22px; color: #1e3a8a; }
         .header-painel p { margin: 3px 0 0 0; font-size: 13px; color: #64748b; }
-        .btn-acao { background: #2563eb; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.15s; }
+        .botoes-topo { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-acao { background: #2563eb; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; }
         .btn-acao:hover { background: #1d4ed8; }
+        .btn-excel { background: #10b981; }
+        .btn-excel:hover { background: #059669; }
         
         /* Barra de Filtros Inteligentes */
         .card-filtros { background: #fff; padding: 15px 20px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
@@ -55,12 +58,13 @@
                 <p>Painel de Desempenho e Indicadores Comerciais (RN e PB)</p>
             </div>
         </div>
-        <div>
-            <a href="/disparar" class="btn-acao">🚀 Ir para o Disparador</a>
+        <div class="botoes-topo">
+            <a href="/exportar_csv" class="btn-acao btn-excel">📥 Baixar Excel</a>
+            <a href="/disparar" class="btn-acao">🚀 Disparador</a>
         </div>
     </div>
 
-    <!-- BARRA DE FILTROS INTELIGENTES (COM DATAS, REPRESENTANTE, ESTADO E BUSCA) -->
+    <!-- BARRA DE FILTROS INTELIGENTES -->
     <div class="card-filtros">
         <div class="filtro-group">
             <label for="filtroRep">Filtrar por Representante:</label>
