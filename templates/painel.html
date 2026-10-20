@@ -132,7 +132,6 @@
                     <td>{{ f.data_registro.strftime('%d/%m/%Y %H:%M') if f.data_registro else '-' }}</td>
                     <td><strong>{{ f.cliente }}</strong></td>
                     <td>{{ f.representante }}</td>
-                    <!-- Nota do Representante exibida em Estrelas ⭐ de 1 a 5 -->
                     <td style="text-align: center; white-space: nowrap;">
                         {% if f.nota_representante and f.nota_representante > 0 %}
                             {% for i in range(f.nota_representante) %}⭐{% endfor %} <span style="font-size: 11px; color: #64748b;">({{ f.nota_representante }}/5)</span>
@@ -196,7 +195,7 @@
 
             if (entRaw.includes("100%") || entRaw.includes("correto") || entRaw.includes("tudo")) {
                 categoriaEntrega = "Sucesso (100% Correto)";
-            } else if (entRaw.includes("problema") || entRaw.includes("atraso") || entRaw.includes("falta")) {
+            } else if (entRaw.includes("problema") || entRaw.includes("atraso") || entRaw.includes("falta") || entRaw.includes("teve")) {
                 categoriaEntrega = "Com Problema / Reclamação";
             }
 
@@ -211,14 +210,23 @@
         if (chartEntregas) chartEntregas.destroy();
         if (chartNotas) chartNotas.destroy();
 
+        const labelsEntregas = Object.keys(entregasContagem);
+        
+        // Mapeamento preciso: Sucesso sempre Verde (#10b981), Problema sempre Vermelho (#ef4444)
+        const coresEntregas = labelsEntregas.map(label => {
+            if (label.includes("Sucesso")) return '#10b981'; // Verde
+            if (label.includes("Problema")) return '#ef4444'; // Vermelho
+            return '#f59e0b'; // Amarelo para outros
+        });
+
         const ctxEntregas = document.getElementById('graficoEntregas').getContext('2d');
         chartEntregas = new Chart(ctxEntregas, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(entregasContagem),
+                labels: labelsEntregas,
                 datasets: [{
                     data: Object.values(entregasContagem),
-                    backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6']
+                    backgroundColor: coresEntregas
                 }]
             },
             options: {
