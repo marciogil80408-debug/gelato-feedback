@@ -3,6 +3,7 @@ from datetime import datetime
 import pytz
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+import sqlalchemy as sa
 
 app = Flask(__name__)
 
@@ -46,8 +47,27 @@ class Feedback(db.Model):
     comentario = db.Column(db.Text, nullable=True)
 
 with app.app_context():
-    # SEGURO: Apenas cria tabelas novas se não existirem, NUNCA apaga dados existentes!
     db.create_all()
+    
+    # SEGURANÇA AUTOMÁTICA: Adiciona colunas ausentes sem NUNCA apagar dados existentes
+    try:
+        inspector = sa.inspect(db.engine)
+        if 'feedback' in inspector.get_table_names():
+            columns = [c['name'] for c in inspector.get_columns('feedback')]
+            with db.engine.connect() as conn:
+                colunas_necessarias = [
+                    ('obs_visitas', 'TEXT'), ('qual_falta', 'TEXT'),
+                    ('obs_entrega', 'TEXT'), ('obs_geral', 'TEXT'),
+                    ('comentario', 'TEXT'), ('nota_representante', 'INTEGER'),
+                    ('visitas_suporte', 'VARCHAR(150)'), ('falta_produto', 'VARCHAR(150)'),
+                    ('entrega_status', 'VARCHAR(150)'), ('nota_geral', 'INTEGER')
+                ]
+                for col_nome, col_tipo in colunas_necessarias:
+                    if col_nome not in columns:
+                        conn.execute(sa.text(f'ALTER TABLE feedback ADD COLUMN {col_nome} {col_tipo}'))
+                        conn.commit()
+    except Exception as e:
+        print("Aviso na checagem de colunas:", str(e))
 
 # Página de Avaliação do Cliente
 @app.route('/')
@@ -128,9 +148,13 @@ def salvar():
 # Painel de Gestão e Resultados (Com dados para os gráficos)
 @app.route('/painel')
 def painel():
-    feedbacks = Feedback.query.order_by(Feedback.id.desc()).all()
-    clientes = ClienteModel.query.all()
-    representantes = RepresentanteModel.query.all()
+    try:
+        feedbacks = Feedback.query.order_by(Feedback.id.desc()).all()
+        clientes = ClienteModel.query.all()
+        representantes = RepresentanteModel.query.all()
+    except Exception as e:
+        print("Erro ao carregar painel:", str(e))
+        feedbacks, clientes, representantes = [], [], []
     return render_template('painel.html', feedbacks=feedbacks, clientes=clientes, representantes=representantes)
 
 # Tela do Disparador WhatsApp e Cadastros

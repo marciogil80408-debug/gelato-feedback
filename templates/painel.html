@@ -82,9 +82,9 @@
                     <td>{{ f.visitas_suporte or '-' }}</td>
                     <td>{{ f.falta_produto or '-' }}</td>
                     <td>
-                        {% if '100%' in f.entrega_status or 'Tudo' in f.entrega_status %}
+                        {% if f.entrega_status and ('100%' in f.entrega_status or 'Tudo' in f.entrega_status) %}
                             <span class="badge badge-verde">{{ f.entrega_status }}</span>
-                        {% elif 'problema' in f.entrega_status|lower or 'atraso' in f.entrega_status|lower %}
+                        {% elif f.entrega_status and ('problema' in f.entrega_status|lower or 'atraso' in f.entrega_status|lower) %}
                             <span class="badge badge-vermelho">{{ f.entrega_status }}</span>
                         {% else %}
                             <span class="badge badge-amarelo">{{ f.entrega_status or '-' }}</span>
@@ -110,17 +110,15 @@
 </div>
 
 <script>
-    // Processando dados reais do banco para montar os gráficos automaticamente
     const feedbacksData = [
         {% for f in feedbacks %}
         {
-            entrega: "{{ f.entrega_status or 'Não Informado' }}",
+            entrega: {{ (f.entrega_status or 'Não Informado') | tojson }},
             notaGeral: {{ f.nota_geral or 0 }}
         },
-        {% endfor %>
+        {% endfor %}
     ];
 
-    // Contando status de entregas (para destacar reclamações)
     let entregasContagem = {};
     let notasContagem = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0};
 
@@ -134,7 +132,6 @@
         }
     });
 
-    // Gráfico de Entregas (Pizza / Rosca)
     const ctxEntregas = document.getElementById('graficoEntregas').getContext('2d');
     new Chart(ctxEntregas, {
         type: 'doughnut',
@@ -151,7 +148,6 @@
         }
     });
 
-    // Gráfico de Notas Gerais (Colunas)
     const ctxNotas = document.getElementById('graficoNotas').getContext('2d');
     new Chart(ctxNotas, {
         type: 'bar',
