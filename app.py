@@ -27,13 +27,13 @@ class RepresentanteModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
 
-# Tabela de Rotas Cadastradas (Ex: Rota de Sousa, Rota de Natal, Rota de Fortaleza)
+# Tabela de Rotas Cadastradas
 class RotaModel(db.Model):
     __tablename__ = 'rota_model'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
 
-# Tabela de Clientes/Lojas (Com Rota, Freezer Comodato e Forma de Pagamento)
+# Tabela de Clientes/Lojas (Com Rota, Freezer, Pagamento e Observação)
 class ClienteModel(db.Model):
     __tablename__ = 'cliente_model'
     id = db.Column(db.Integer, primary_key=True)
@@ -45,6 +45,7 @@ class ClienteModel(db.Model):
     rota = db.Column(db.String(100), nullable=True)
     freezer = db.Column(db.String(100), nullable=True)
     pagamento_padrao = db.Column(db.String(100), nullable=True)
+    observacao = db.Column(db.Text, nullable=True)
 
 # Tabela de Feedbacks / Avaliações dos Clientes
 class Feedback(db.Model):
@@ -104,6 +105,9 @@ with app.app_context():
                 if 'pagamento_padrao' not in col_cl:
                     conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN pagamento_padrao VARCHAR(100)'))
                     conn.commit()
+                if 'observacao' not in col_cl:
+                    conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN observacao TEXT'))
+                    conn.commit()
     except Exception as e:
         print("Aviso na checagem de colunas:", str(e))
 
@@ -154,6 +158,7 @@ def cadastrar_cliente():
     rota = dados.get('rota', '').strip()
     freezer = dados.get('freezer', '').strip()
     pagamento_padrao = dados.get('pagamento_padrao', '').strip()
+    observacao = dados.get('observacao', '').strip()
     
     if not nome:
         return jsonify({'status': 'erro', 'mensagem': 'Nome do cliente obrigatório'}), 400
@@ -166,7 +171,8 @@ def cadastrar_cliente():
             estado=estado,
             rota=rota,
             freezer=freezer or 'Sem Freezer',
-            pagamento_padrao=pagamento_padrao or 'A Combinar'
+            pagamento_padrao=pagamento_padrao or 'A Combinar',
+            observacao=observacao or ''
         )
         db.session.add(novo)
         db.session.commit()
@@ -203,6 +209,7 @@ def editar_cliente():
         cliente.rota = dados.get('rota', cliente.rota).strip()
         cliente.freezer = dados.get('freezer', cliente.freezer or 'Sem Freezer').strip()
         cliente.pagamento_padrao = dados.get('pagamento_padrao', cliente.pagamento_padrao or 'A Combinar').strip()
+        cliente.observacao = dados.get('observacao', cliente.observacao or '').strip()
         
         db.session.commit()
         return jsonify({'status': 'sucesso'})
@@ -236,7 +243,8 @@ def dados_cadastrados():
         'estado': c.estado or 'RN',
         'rota': c.rota or 'Geral',
         'freezer': c.freezer or 'Sem Freezer',
-        'pagamento_padrao': c.pagamento_padrao or 'A Combinar'
+        'pagamento_padrao': c.pagamento_padrao or 'A Combinar',
+        'observacao': c.observacao or ''
     } for c in ClienteModel.query.all()]
     return jsonify({'representantes': reps, 'rotas': rotas, 'clientes': clientes})
 

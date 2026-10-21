@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 1150px; margin: 0 auto; }
+        .container { max-width: 1250px; margin: 0 auto; }
         
         .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-left: 6px solid #2563eb; flex-wrap: wrap; gap: 15px; }
         .logo-area { display: flex; align-items: center; gap: 15px; }
@@ -54,6 +54,10 @@
         .badge-rota { background: #ede9fe; color: #6d28d9; font-weight: bold; }
         .badge-freezer { background: #e0f2fe; color: #0369a1; font-weight: bold; }
         .badge-pag { background: #fef3c7; color: #92400e; font-weight: bold; }
+        
+        .input-obs-tabela { width: 100%; min-width: 170px; padding: 6px 8px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
+        .input-obs-tabela:focus { border-color: #2563eb; outline: none; background: #eff6ff; }
+
         .btn-mini { background: #2563eb; color: white; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-mini:hover { background: #1d4ed8; }
         
@@ -77,7 +81,7 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" style="height: 55px; width: auto; border-radius: 10px; object-fit: contain;">
             <div>
                 <h1>Central de Rotas e Disparos</h1>
-                <p>Organizador de Itinerário, Logística, Freezers e Cobranças</p>
+                <p>Organizador de Itinerário, Logística, Freezers, Cobranças e Bonificações</p>
             </div>
         </div>
         <div>
@@ -106,7 +110,7 @@
 
     <!-- SEÇÃO 2: CADASTRO DE CLIENTE -->
     <div class="card">
-        <h2>3. Cadastrar Cliente (Com Rota, Freezer e Pagamento) 🏢</h2>
+        <h2>3. Cadastrar Cliente (Com Rota, Freezer, Cobrança e Observação) 🏢</h2>
         <div class="form-grid">
             <div class="form-group">
                 <label>Nome do Cliente / Loja:</label>
@@ -156,11 +160,15 @@
                     <option value="">Selecione o representante...</option>
                 </select>
             </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>🎁 Observação Padrão / Bonificação Inicial:</label>
+                <input type="text" id="cad_obs" placeholder="Ex: Levar 1 caixa de açaí bonificada / Freezer no fundo da loja">
+            </div>
         </div>
         <button class="btn-acao" style="background: #10b981;" onclick="cadastrarCliente()">Salvar Cliente na Rota ✅</button>
     </div>
 
-    <!-- SEÇÃO 3: DISPARADOR WHATSAPP E ROMANEIO COM ORDENAÇÃO -->
+    <!-- SEÇÃO 3: DISPARADOR WHATSAPP E ROMANEIO COM BONIFICAÇÃO -->
     <div class="card">
         <h2>4. Disparador WhatsApp e Romaneio de Carga 🚀</h2>
         
@@ -219,10 +227,10 @@
         </div>
 
         <p style="font-size: 12px; color: #64748b; margin-top: 15px; margin-bottom: 5px;">
-            💡 <strong>Itinerário Inteligente:</strong> Arraste pelo ícone <strong>☰</strong> ou use os botões <strong>⬆️ / ⬇️</strong> para colocar as lojas na ordem exata de entrega antes de enviar o romaneio!
+            💡 <strong>Dica de Operação:</strong> Você pode digitar observações e bonificações direto no campo <strong>"🎁 Obs / Bonificação"</strong> de cada loja antes de gerar o romaneio para a logística!
         </p>
 
-        <!-- Tabela Reordenável com Cobrança e Freezer -->
+        <!-- Tabela com Campo de Bonificação e Reordenação -->
         <table>
             <thead>
                 <tr>
@@ -234,13 +242,14 @@
                     <th>WhatsApp</th>
                     <th>💳 Pagamento</th>
                     <th>❄️ Freezer</th>
+                    <th style="min-width: 180px;">🎁 Obs / Bonificação</th>
                     <th>Status</th>
                     <th style="text-align: center;">Ação</th>
                 </tr>
             </thead>
             <tbody id="tabelaCorpo">
                 <tr>
-                    <td colspan="10" style="text-align: center; color: #64748b; padding: 20px;">Carregando dados da rota...</td>
+                    <td colspan="11" style="text-align: center; color: #64748b; padding: 20px;">Carregando dados da rota...</td>
                 </tr>
             </tbody>
         </table>
@@ -254,9 +263,24 @@
     let filaEnvio = [];
     let indiceAtualFila = 0;
 
-    const MSG_AVALIACAO = `Olá, {cliente}! Tudo bem? Aqui é da equipe Gelato da Fran 🍦.\n\nGostaríamos de saber como foi sua entrega recente com o representante {representante}. Leva menos de 1 minuto para avaliar no link:\n\n👉 {link}\n\nMuito obrigado pela parceria!`;
+    // EMOJIS SEGUROS GERADOS POR CÓDIGO (NUNCA CORROMPEM OU VIRAM )
+    const EMOJI_SORVETE = String.fromCodePoint(0x1F366);
+    const EMOJI_CAMINHAO = String.fromCodePoint(0x1F69A);
+    const EMOJI_PIN = String.fromCodePoint(0x1F4CD);
+    const EMOJI_FONE = String.fromCodePoint(0x1F4DE);
+    const EMOJI_CALENDARIO = String.fromCodePoint(0x1F4C5);
+    const EMOJI_REP = String.fromCodePoint(0x1F464);
+    const EMOJI_PACOTE = String.fromCodePoint(0x1F4E6);
+    const EMOJI_ALERTA = String.fromCodePoint(0x26A0) + '\uFE0F';
+    const EMOJI_DEDO = String.fromCodePoint(0x1F449);
+    const EMOJI_PRANCHETA = String.fromCodePoint(0x1F4CB);
+    const EMOJI_PRESENTE = String.fromCodePoint(0x1F381);
+    const EMOJI_GELO = String.fromCodePoint(0x2744) + '\uFE0F';
+    const EMOJI_CARTAO = String.fromCodePoint(0x1F4B3);
 
-    const MSG_ROTA = `Olá, {cliente}! Aqui é da equipe Gelato da Fran 🍦.\n\nInformamos que as entregas da {rota} com nosso representante {representante} estão programadas para hoje! Caso precise de reposição rápida ou queira conferir seu pedido, estamos à disposição. Abraços!`;
+    const MSG_AVALIACAO = `Olá, {cliente}! Tudo bem? Aqui é da equipe Gelato da Fran ${EMOJI_SORVETE}.\n\nGostaríamos de saber como foi sua entrega recente com o representante {representante}. Leva menos de 1 minuto para avaliar no link:\n\n${EMOJI_DEDO} {link}\n\nMuito obrigado pela parceria!`;
+
+    const MSG_ROTA = `Olá, {cliente}! Aqui é da equipe Gelato da Fran ${EMOJI_SORVETE}.\n\nInformamos que as entregas da {rota} com nosso representante {representante} estão programadas para hoje! Caso precise de reposição rápida ou queira conferir seu pedido, estamos à disposição. Abraços!`;
 
     function carregarDadosIniciais() {
         fetch('/api/dados_cadastrados')
@@ -325,7 +349,7 @@
         });
 
         if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente encontrado nessa rota.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente encontrado nessa rota.</td></tr>';
             return;
         }
 
@@ -350,6 +374,9 @@
                 <td>${c.whatsapp || '-'}</td>
                 <td><span class="badge badge-pag">${c.pagamento_padrao || 'A Combinar'}</span></td>
                 <td><span class="badge badge-freezer">${c.freezer || 'Sem Freezer'}</span></td>
+                <td>
+                    <input type="text" class="input-obs-tabela" id="obs_${c.id}" value="${c.observacao || ''}" placeholder="Ex: 1 cx açaí bonificada">
+                </td>
                 <td><span class="badge badge-aguardando" id="status_${c.id}">Aguardando</span></td>
                 <td style="text-align: center;">
                     <button class="btn-mini" onclick="enviarIndividual('${c.id}')">📲 Enviar</button>
@@ -455,14 +482,19 @@
             if (chk && chk.checked) {
                 const id = chk.getAttribute('data-id');
                 const c = todosClientes.find(item => item.id == id);
-                if (c) selecionados.push(c);
+                if (c) {
+                    // Pega a observação digitada diretamente no campo da tabela
+                    const inputObs = document.getElementById('obs_' + id);
+                    const obsTexto = inputObs ? inputObs.value.trim() : (c.observacao || '');
+                    selecionados.push({ ...c, observacao_atual: obsTexto });
+                }
             }
         });
 
         return selecionados;
     }
 
-    // ROMANEIO COMPLETO COM COBRANÇA E FREEZER
+    // ROMANEIO COMPLETO COM BONIFICAÇÃO / OBSERVAÇÃO
     function montarTextoRomaneio() {
         const selecionados = obterClientesOrdenadosSelecionados();
         if (selecionados.length === 0) {
@@ -474,27 +506,30 @@
         const repSel = document.getElementById('filtro_rep').value || 'Todos os Representantes';
         const dataFormatada = new Date().toLocaleDateString('pt-BR');
 
-        let texto = `🚚 *ROMANEIO DE CARGA E ENTREGAS - GELATO DA FRAN* 🍦\n`;
-        texto += `📅 *Data:* ${dataFormatada}\n`;
-        texto += `📍 *Rota:* ${rotaSel}\n`;
-        texto += `👤 *Representante:* ${repSel}\n`;
-        texto += `📦 *Total de Entregas:* ${selecionados.length} lojas programadas\n`;
+        let texto = `${EMOJI_CAMINHAO} *ROMANEIO DE CARGA E ENTREGAS - GELATO DA FRAN* ${EMOJI_SORVETE}\n`;
+        texto += `${EMOJI_CALENDARIO} *Data:* ${dataFormatada}\n`;
+        texto += `${EMOJI_PIN} *Rota:* ${rotaSel}\n`;
+        texto += `${EMOJI_REP} *Representante:* ${repSel}\n`;
+        texto += `${EMOJI_PACOTE} *Total de Entregas:* ${selecionados.length} lojas programadas\n`;
         texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `📋 *ORDEM DE ENTREGA (ITINERÁRIO E COBRANÇAS):*\n\n`;
+        texto += `${EMOJI_PRANCHETA} *ORDEM DE ENTREGA (ITINERÁRIO E AVISOS):*\n\n`;
 
         selecionados.forEach((c, index) => {
             texto += `${index + 1}. *${c.nome.toUpperCase()}*\n`;
-            texto += `   📍 Cidade: ${c.cidade || 'Não informada'} / ${c.estado || 'RN'}\n`;
-            texto += `   📞 Contato: ${c.whatsapp || 'Não informado'}\n`;
-            texto += `   💳 Pagamento: *${c.pagamento_padrao || 'A Combinar'}*\n`;
+            texto += `   ${EMOJI_PIN} Cidade: ${c.cidade || 'Não informada'} / ${c.estado || 'RN'}\n`;
+            texto += `   ${EMOJI_FONE} Contato: ${c.whatsapp || 'Não informado'}\n`;
+            texto += `   ${EMOJI_CARTAO} Pagamento: *${c.pagamento_padrao || 'A Combinar'}*\n`;
             if (c.freezer && c.freezer !== 'Sem Freezer' && c.freezer !== 'None') {
-                texto += `   ❄️ Freezer Comodato: ${c.freezer}\n`;
+                texto += `   ${EMOJI_GELO} Freezer Comodato: ${c.freezer}\n`;
+            }
+            if (c.observacao_atual) {
+                texto += `   ${EMOJI_PRESENTE} *Obs / Bonificação:* ${c.observacao_atual}\n`;
             }
             texto += `\n`;
         });
 
         texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `⚠️ *Aviso Logística:* Motorista e conferência, checar pagamentos e pedidos antes do descarregamento.`;
+        texto += `${EMOJI_ALERTA} *Aviso Logística:* Motorista e conferência, checar bonificações e pagamentos antes da saída.`;
 
         return texto;
     }
@@ -504,7 +539,7 @@
         if (!texto) return;
 
         navigator.clipboard.writeText(texto).then(() => {
-            alert("📋 Romaneio completo com cobranças e freezers copiado com sucesso!\n\nAgora basta colar (Ctrl+V) no WhatsApp do grupo de logística.");
+            alert("📋 Romaneio com bonificações e cobranças copiado com sucesso!\n\nAgora basta colar (Ctrl+V) no WhatsApp do grupo de logística.");
         }).catch(() => {
             prompt("Copie o texto do romaneio abaixo (Ctrl+C):", texto);
         });
@@ -613,6 +648,7 @@
         const rota = document.getElementById('cad_rota').value;
         const freezer = document.getElementById('cad_freezer').value.trim();
         const pagamento_padrao = document.getElementById('cad_pagamento').value;
+        const observacao = document.getElementById('cad_obs').value.trim();
         const cidade = document.getElementById('cad_cidade').value.trim();
         const estado = document.getElementById('cad_estado').value;
         const whatsapp = document.getElementById('cad_whatsapp').value.trim();
@@ -623,7 +659,7 @@
         fetch('/api/cadastrar_cliente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, rota, freezer, pagamento_padrao, cidade, estado, whatsapp, representante })
+            body: JSON.stringify({ nome, rota, freezer, pagamento_padrao, observacao, cidade, estado, whatsapp, representante })
         })
         .then(res => res.json())
         .then(res => {
@@ -633,6 +669,7 @@
                 document.getElementById('cad_cidade').value = '';
                 document.getElementById('cad_whatsapp').value = '';
                 document.getElementById('cad_freezer').value = '';
+                document.getElementById('cad_obs').value = '';
                 carregarDadosIniciais();
             } else {
                 alert("Erro: " + res.mensagem);
