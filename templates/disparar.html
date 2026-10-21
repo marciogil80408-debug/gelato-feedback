@@ -129,13 +129,10 @@
             <div class="form-group">
                 <label>💳 Forma de Pagamento:</label>
                 <select id="cad_pagamento">
-                    <option value="A Combinar">A Combinar</option>
-                    <option value="Pix na Entrega">Pix na Entrega</option>
-                    <option value="À Vista (Dinheiro)">À Vista (Dinheiro)</option>
-                    <option value="Boleto 7 Dias">Boleto 7 Dias</option>
-                    <option value="Boleto 14 Dias">Boleto 14 Dias</option>
-                    <option value="Boleto 21 Dias">Boleto 21 Dias</option>
-                    <option value="Faturamento Mensal">Faturamento Mensal</option>
+                    <option value="Boleto">Boleto</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Cartão">Cartão</option>
+                    <option value="Dinheiro">Dinheiro</option>
                 </select>
             </div>
             <div class="form-group">
@@ -230,7 +227,7 @@
             💡 <strong>Dica de Operação:</strong> Você pode digitar observações e bonificações direto no campo <strong>"🎁 Obs / Bonificação"</strong> de cada loja antes de gerar o romaneio para a logística!
         </p>
 
-        <!-- Tabela com Campo de Bonificação e Reordenação -->
+        <!-- Tabela -->
         <table>
             <thead>
                 <tr>
@@ -263,7 +260,6 @@
     let filaEnvio = [];
     let indiceAtualFila = 0;
 
-    // EMOJIS SEGUROS GERADOS POR CÓDIGO (NUNCA CORROMPEM OU VIRAM )
     const EMOJI_SORVETE = String.fromCodePoint(0x1F366);
     const EMOJI_CAMINHAO = String.fromCodePoint(0x1F69A);
     const EMOJI_PIN = String.fromCodePoint(0x1F4CD);
@@ -372,7 +368,7 @@
                 <td><span class="badge badge-rota">${c.rota || 'Geral'}</span></td>
                 <td>${c.cidade || '-'} / ${c.estado || 'RN'}</td>
                 <td>${c.whatsapp || '-'}</td>
-                <td><span class="badge badge-pag">${c.pagamento_padrao || 'A Combinar'}</span></td>
+                <td><span class="badge badge-pag">${c.pagamento_padrao || 'Boleto'}</span></td>
                 <td><span class="badge badge-freezer">${c.freezer || 'Sem Freezer'}</span></td>
                 <td>
                     <input type="text" class="input-obs-tabela" id="obs_${c.id}" value="${c.observacao || ''}" placeholder="Ex: 1 cx açaí bonificada">
@@ -483,7 +479,6 @@
                 const id = chk.getAttribute('data-id');
                 const c = todosClientes.find(item => item.id == id);
                 if (c) {
-                    // Pega a observação digitada diretamente no campo da tabela
                     const inputObs = document.getElementById('obs_' + id);
                     const obsTexto = inputObs ? inputObs.value.trim() : (c.observacao || '');
                     selecionados.push({ ...c, observacao_atual: obsTexto });
@@ -494,7 +489,6 @@
         return selecionados;
     }
 
-    // ROMANEIO COMPLETO COM BONIFICAÇÃO / OBSERVAÇÃO
     function montarTextoRomaneio() {
         const selecionados = obterClientesOrdenadosSelecionados();
         if (selecionados.length === 0) {
@@ -518,7 +512,7 @@
             texto += `${index + 1}. *${c.nome.toUpperCase()}*\n`;
             texto += `   ${EMOJI_PIN} Cidade: ${c.cidade || 'Não informada'} / ${c.estado || 'RN'}\n`;
             texto += `   ${EMOJI_FONE} Contato: ${c.whatsapp || 'Não informado'}\n`;
-            texto += `   ${EMOJI_CARTAO} Pagamento: *${c.pagamento_padrao || 'A Combinar'}*\n`;
+            texto += `   ${EMOJI_CARTAO} Pagamento: *${c.pagamento_padrao || 'Boleto'}*\n`;
             if (c.freezer && c.freezer !== 'Sem Freezer' && c.freezer !== 'None') {
                 texto += `   ${EMOJI_GELO} Freezer Comodato: ${c.freezer}\n`;
             }

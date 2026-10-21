@@ -84,7 +84,7 @@
                     <td>{{ c.cidade or '-' }} / {{ c.estado or 'RN' }}</td>
                     <td>{{ c.whatsapp or '-' }}</td>
                     <td><span class="badge-freezer">{{ c.freezer or 'Sem Freezer' }}</span></td>
-                    <td><span class="badge-pag">{{ c.pagamento_padrao or 'A Combinar' }}</span></td>
+                    <td><span class="badge-pag">{{ c.pagamento_padrao or 'Boleto' }}</span></td>
                     <td>{{ c.representante or 'Geral' }}</td>
                     <td style="text-align: center;">
                         <button class="btn-editar" onclick="abrirEditarCliente('{{ c.id }}', '{{ c.nome }}', '{{ c.whatsapp }}', '{{ c.representante }}', '{{ c.cidade }}', '{{ c.estado }}', '{{ c.rota }}', '{{ c.freezer }}', '{{ c.pagamento_padrao }}')">✏️ Editar</button>
@@ -125,13 +125,10 @@
         <div class="modal-group">
             <label>💳 Forma de Pagamento Padrão na Rota:</label>
             <select id="edit_pagamento">
-                <option value="A Combinar">A Combinar</option>
-                <option value="Pix na Entrega">Pix na Entrega</option>
-                <option value="À Vista (Dinheiro)">À Vista (Dinheiro)</option>
-                <option value="Boleto 7 Dias">Boleto 7 Dias</option>
-                <option value="Boleto 14 Dias">Boleto 14 Dias</option>
-                <option value="Boleto 21 Dias">Boleto 21 Dias</option>
-                <option value="Faturamento Mensal">Faturamento Mensal</option>
+                <option value="Boleto">Boleto</option>
+                <option value="Pix">Pix</option>
+                <option value="Cartão">Cartão</option>
+                <option value="Dinheiro">Dinheiro</option>
             </select>
         </div>
         <div class="modal-group">
@@ -189,7 +186,7 @@
         document.getElementById('edit_cidade').value = (cidade === 'None' || !cidade) ? '' : cidade;
         document.getElementById('edit_estado').value = (estado === 'None' || !estado) ? 'RN' : estado;
         document.getElementById('edit_freezer').value = (!freezer || freezer === 'None') ? 'Sem Freezer' : freezer;
-        document.getElementById('edit_pagamento').value = (!pagamento || pagamento === 'None') ? 'A Combinar' : pagamento;
+        document.getElementById('edit_pagamento').value = (!pagamento || pagamento === 'None') ? 'Boleto' : pagamento;
         
         const rotaSel = document.getElementById('edit_rota');
         const rotaValor = (!rota || rota === 'None') ? 'Geral' : rota;
