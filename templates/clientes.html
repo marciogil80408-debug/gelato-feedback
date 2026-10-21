@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Clientes - Gelato da Fran 🍦</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-left: 6px solid #8b5cf6; flex-wrap: wrap; gap: 15px; }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .header-painel h1 { margin: 0; font-size: 22px; color: #1e3a8a; }
+        .header-painel p { margin: 3px 0 0 0; font-size: 13px; color: #64748b; }
+        .btn-acao { background: #2563eb; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; }
+        .btn-acao:hover { background: #1d4ed8; }
+        
+        .card-tabela { background: #fff; padding: 20px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; }
+        .card-tabela h3 { margin-top: 0; color: #334155; font-size: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; color: #475569; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .btn-editar { background: #f59e0b; color: white; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-editar:hover { background: #d97706; }
+        .input-busca { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; width: 250px; }
+
+        /* Modal Simples de Edição */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 14px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-card h3 { margin-top: 0; color: #1e3a8a; }
+        .modal-group { margin-bottom: 12px; }
+        .modal-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #334155; }
+        .modal-group input, .modal-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; }
+        .modal-botoes { display: flex; gap: 10px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-painel">
+        <div class="logo-area">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" style="height: 55px; width: auto; border-radius: 10px; object-fit: contain;">
+            <div>
+                <h1>Gestão de Clientes e Rotas</h1>
+                <p>Base de Lojas Cadastradas (RN e PB)</p>
+            </div>
+        </div>
+        <div>
+            <a href="/painel" class="btn-acao">📊 Voltar ao Painel</a>
+        </div>
+    </div>
+
+    <div class="card-tabela">
+        <h3>
+            <span>Lista de Clientes Cadastrados</span>
+            <input type="text" id="buscaCliente" class="input-busca" placeholder="Pesquisar loja ou cidade..." onkeyup="filtrarClientes()">
+        </h3>
+        <table id="tabelaClientes">
+            <thead>
+                <tr>
+                    <th>Loja / Cliente</th>
+                    <th>Cidade / Estado</th>
+                    <th>WhatsApp</th>
+                    <th>Representante</th>
+                    <th style="text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clientes %}
+                <tr data-nome="{{ c.nome | lower }}" data-cidade="{{ (c.cidade or '') | lower }}">
+                    <td><strong>{{ c.nome }}</strong></td>
+                    <td>{{ c.cidade or '-' }} / {{ c.estado or 'RN' }}</td>
+                    <td>{{ c.whatsapp or '-' }}</td>
+                    <td>{{ c.representante or 'Geral' }}</td>
+                    <td style="text-align: center;">
+                        <button class="btn-editar" onclick="abrirEditarCliente('{{ c.id }}', '{{ c.nome }}', '{{ c.whatsapp }}', '{{ c.representante }}', '{{ c.cidade }}', '{{ c.estado }}')">✏️ Editar</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente cadastrado ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL DE EDIÇÃO DE CLIENTE -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal-card">
+        <h3>✏️ Editar Cliente / Loja</h3>
+        <input type="hidden" id="edit_id">
+        <div class="modal-group">
+            <label>Nome do Cliente:</label>
+            <input type="text" id="edit_nome">
+        </div>
+        <div class="modal-group">
+            <label>Cidade:</label>
+            <input type="text" id="edit_cidade">
+        </div>
+        <div class="modal-group">
+            <label>Estado (Rota):</label>
+            <select id="edit_estado">
+                <option value="RN">RN</option>
+                <option value="PB">PB</option>
+            </select>
+        </div>
+        <div class="modal-group">
+            <label>WhatsApp:</label>
+            <input type="text" id="edit_whatsapp">
+        </div>
+        <div class="modal-group">
+            <label>Representante:</label>
+            <input type="text" id="edit_representante">
+        </div>
+        <div class="modal-group" style="border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 10px;">
+            <label style="color: #ef4444;">Senha de Administrador:</label>
+            <input type="password" id="edit_senha" placeholder="Digite a senha...">
+        </div>
+        <div class="modal-botoes">
+            <button class="btn-acao" style="background: #10b981; flex: 1;" onclick="salvarEdicaoCliente()">Salvar</button>
+            <button class="btn-acao" style="background: #64748b; flex: 1;" onclick="fecharModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filtrarClientes() {
+        const termo = document.getElementById('buscaCliente').value.toLowerCase();
+        const linhas = document.querySelectorAll('#tabelaClientes tbody tr');
+
+        linhas.forEach(linha => {
+            if (linha.cells.length === 1) return;
+            const nome = linha.getAttribute('data-nome');
+            const cidade = linha.getAttribute('data-cidade');
+
+            if (nome.includes(termo) || cidade.includes(termo)) {
+                linha.style.display = '';
+            } else {
+                linha.style.display = 'none';
+            }
+        });
+    }
+
+    function abrirEditarCliente(id, nome, whatsapp, representante, cidade, estado) {
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_nome').value = nome;
+        document.getElementById('edit_whatsapp').value = whatsapp === 'None' ? '' : whatsapp;
+        document.getElementById('edit_representante').value = representante === 'None' ? '' : representante;
+        document.getElementById('edit_cidade').value = cidade === 'None' ? '' : cidade;
+        document.getElementById('edit_estado').value = estado === 'None' ? 'RN' : estado;
+        document.getElementById('edit_senha').value = '';
+        document.getElementById('modalEditar').style.display = 'flex';
+    }
+
+    function fecharModal() {
+        document.getElementById('modalEditar').style.display = 'none';
+    }
+
+    function salvarEdicaoCliente() {
+        const id = document.getElementById('edit_id').value;
+        const nome = document.getElementById('edit_nome').value;
+        const cidade = document.getElementById('edit_cidade').value;
+        const estado = document.getElementById('edit_estado').value;
+        const whatsapp = document.getElementById('edit_whatsapp').value;
+        const representante = document.getElementById('edit_representante').value;
+        const senha = document.getElementById('edit_senha').value;
+
+        if (!senha) {
+            alert("Digite a senha de administrador para salvar as alterações!");
+            return;
+        }
+
+        fetch('/api/editar_cliente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, nome, cidade, estado, whatsapp, representante, senha })
+        })
+        .then(res => res.json())
+        .then(resposta => {
+            if (resposta.status === 'sucesso') {
+                alert("Cliente atualizado com sucesso! ✅");
+                location.reload();
+            } else {
+                alert("Erro: " + resposta.mensagem);
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

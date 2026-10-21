@@ -7,7 +7,7 @@ import sqlalchemy as sa
 
 app = Flask(__name__)
 
-# SENHA DE ADMINISTRADOR DO SISTEMA (Você pode alterar aqui quando quiser)
+# SENHA DE ADMINISTRADOR DO SISTEMA
 SENHA_ADMIN = "1234"
 
 # Configuração do Banco de Dados PostgreSQL (Render) ou SQLite local de segurança
@@ -193,7 +193,7 @@ def dados_cadastrados():
     } for c in ClienteModel.query.all()]
     return jsonify({'representantes': reps, 'clientes': clientes})
 
-# Rota para Salvar o Feedback (Horário de Brasília Exato)
+# Rota para Salvar o Feedback
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
@@ -265,12 +265,21 @@ def exportar_csv():
 def painel():
     try:
         feedbacks = Feedback.query.order_by(Feedback.id.desc()).all()
-        clientes = ClienteModel.query.all()
         representantes = RepresentanteModel.query.all()
     except Exception as e:
         print("Erro ao carregar painel:", str(e))
-        feedbacks, clientes, representantes = [], [], []
-    return render_template('painel.html', feedbacks=feedbacks, clientes=clientes, representantes=representantes)
+        feedbacks, representantes = [], []
+    return render_template('painel.html', feedbacks=feedbacks, representantes=representantes)
+
+# Tela Dedicada de Gerenciamento de Clientes
+@app.route('/clientes')
+def clientes():
+    try:
+        lista_clientes = ClienteModel.query.order_by(ClienteModel.nome).all()
+    except Exception as e:
+        print("Erro ao carregar clientes:", str(e))
+        lista_clientes = []
+    return render_template('clientes.html', clientes=lista_clientes)
 
 # Tela do Disparador WhatsApp e Cadastros
 @app.route('/disparar')
