@@ -7,6 +7,9 @@ import sqlalchemy as sa
 
 app = Flask(__name__)
 
+# SENHA DE ADMINISTRADOR DO SISTEMA (Você pode alterar aqui quando quiser)
+SENHA_ADMIN = "1234"
+
 # Configuração do Banco de Dados PostgreSQL (Render) ou SQLite local de segurança
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
@@ -108,7 +111,7 @@ def cadastrar_representante():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Cadastrar Cliente (Com Cidade e Estado)
+# Rota para Cadastrar Cliente
 @app.route('/api/cadastrar_cliente', methods=['POST'])
 def cadastrar_cliente():
     dados = request.json
@@ -129,6 +132,48 @@ def cadastrar_cliente():
             estado=estado
         )
         db.session.add(novo)
+        db.session.commit()
+        return jsonify({'status': 'sucesso'})
+    except Exception as e:
+        return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
+
+# Rota para Editar Cliente Cadastrado (Protegido por Senha)
+@app.route('/api/editar_cliente', methods=['POST'])
+def editar_cliente():
+    dados = request.json
+    senha = dados.get('senha', '')
+    
+    if senha != SENHA_ADMIN:
+        return jsonify({'status': 'erro', 'mensagem': 'Senha de administrador incorreta!'}), 403
+    
+    cliente_id = dados.get('id')
+    cliente = ClienteModel.query.get(cliente_id)
+    if not cliente:
+        return jsonify({'status': 'erro', 'mensagem': 'Cliente não encontrado'}), 404
+    
+    try:
+        cliente.nome = dados.get('nome', cliente.nome).strip()
+        cliente.whatsapp = dados.get('whatsapp', cliente.whatsapp).strip()
+        cliente.representante = dados.get('representante', cliente.representante).strip()
+        cliente.cidade = dados.get('cidade', cliente.cidade).strip()
+        cliente.estado = dados.get('estado', cliente.estado).strip()
+        
+        db.session.commit()
+        return jsonify({'status': 'sucesso'})
+    except Exception as e:
+        return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
+
+# Rota para Zerar apenas os Feedbacks de Teste (Protegido por Senha)
+@app.route('/api/zerar_feedbacks', methods=['POST'])
+def zerar_feedbacks():
+    dados = request.json
+    senha = dados.get('senha', '')
+    
+    if senha != SENHA_ADMIN:
+        return jsonify({'status': 'erro', 'mensagem': 'Senha de administrador incorreta!'}), 403
+    
+    try:
+        Feedback.query.delete()
         db.session.commit()
         return jsonify({'status': 'sucesso'})
     except Exception as e:
