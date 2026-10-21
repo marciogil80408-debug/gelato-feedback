@@ -44,7 +44,14 @@
         .badge-rota { background: #ede9fe; color: #6d28d9; font-weight: bold; }
         .btn-mini { background: #2563eb; color: white; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-mini:hover { background: #1d4ed8; }
-        .acoes-tabela { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        
+        .acoes-tabela { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .grupo-botoes-logistica { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-logistica { background: #8b5cf6; color: white; padding: 10px 14px; border-radius: 8px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.15s; }
+        .btn-logistica:hover { background: #7c3aed; }
+        .btn-logistica-whats { background: #059669; color: white; padding: 10px 14px; border-radius: 8px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.15s; }
+        .btn-logistica-whats:hover { background: #047857; }
+
         .tipo-msg-box { display: flex; gap: 10px; margin-bottom: 10px; }
         .btn-tipo-msg { padding: 8px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-tipo-msg.ativo { background: #2563eb; color: white; border-color: #2563eb; }
@@ -58,7 +65,7 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" style="height: 55px; width: auto; border-radius: 10px; object-fit: contain;">
             <div>
                 <h1>Central de Rotas e Disparos</h1>
-                <p>Gestão de Rotas (RN / PB / CE) e Disparador Guiado</p>
+                <p>Gestão de Rotas (RN / PB / CE), Logística e Disparador Guiado</p>
             </div>
         </div>
         <div>
@@ -125,9 +132,9 @@
         <button class="btn-acao" style="background: #10b981;" onclick="cadastrarCliente()">Salvar Cliente na Rota ✅</button>
     </div>
 
-    <!-- SEÇÃO 3: DISPARADOR WHATSAPP POR ROTA COM MENSAGEM DINÂMICA -->
+    <!-- SEÇÃO 3: DISPARADOR WHATSAPP E ROMANEIO PARA LOGÍSTICA -->
     <div class="card">
-        <h2>4. Disparador WhatsApp por Rota 🚀</h2>
+        <h2>4. Disparador WhatsApp e Romaneio de Carga 🚀</h2>
         
         <!-- Filtros Rápidos -->
         <div class="form-grid">
@@ -151,7 +158,7 @@
 
         <!-- Seletor do Tipo de Mensagem da Rota -->
         <div style="margin-top: 15px;">
-            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Escolha o Tipo de Mensagem para esta Rota:</label>
+            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Escolha o Tipo de Mensagem para os Clientes:</label>
             <div class="tipo-msg-box">
                 <button type="button" class="btn-tipo-msg ativo" id="btnTipoAvaliacao" onclick="mudarTipoMensagem('avaliacao')">⭐ Mensagem de Avaliação de Entrega</button>
                 <button type="button" class="btn-tipo-msg" id="btnTipoRota" onclick="mudarTipoMensagem('rota')">🚚 Mensagem de Aviso de Entrega da Rota</button>
@@ -172,13 +179,17 @@
             </div>
         </div>
 
-        <!-- Ações da Tabela -->
+        <!-- Ações da Tabela e Romaneio para Logística -->
         <div class="acoes-tabela">
             <div>
                 <button class="btn-acao" style="background: #475569; padding: 7px 12px; font-size: 12px;" onclick="marcarTodos(true)">☑️ Marcar Todos</button>
                 <button class="btn-acao" style="background: #64748b; padding: 7px 12px; font-size: 12px;" onclick="marcarTodos(false)">⬜ Desmarcar Todos</button>
             </div>
-            <button class="btn-acao" style="background: #10b981; font-size: 15px;" onclick="iniciarFilaGuiada()">⚡ Iniciar Disparo em Fila da Rota</button>
+            <div class="grupo-botoes-logistica">
+                <button class="btn-logistica" onclick="copiarRomaneioLogistica()">📋 Copiar Romaneio Logística</button>
+                <button class="btn-logistica-whats" onclick="enviarRomaneioWhatsApp()">📲 Enviar Romaneio no WhatsApp</button>
+                <button class="btn-acao" style="background: #10b981;" onclick="iniciarFilaGuiada()">⚡ Iniciar Fila Clientes</button>
+            </div>
         </div>
 
         <!-- Tabela de Lojas da Rota -->
@@ -210,9 +221,20 @@
     let filaEnvio = [];
     let indiceAtualFila = 0;
 
-    const MSG_AVALIACAO = `Olá, {cliente}! Tudo bem? Aqui é da equipe Gelato da Fran 🍦.\n\nGostaríamos de saber como foi sua entrega recente com o representante {representante}. Leva menos de 1 minuto para avaliar no link:\n\n👉 {link}\n\nMuito obrigado pela parceria!`;
+    // Emojis codificados em Unicode nativo para evitar o caractere  no WhatsApp
+    const EMOJI_SORVETE = "\u{1F366}";
+    const EMOJI_DEDO = "\u{1F449}";
+    const EMOJI_CAMINHAO = "\u{1F69A}";
+    const EMOJI_PIN = "\u{1F4CD}";
+    const EMOJI_FONE = "\u{1F4DE}";
+    const EMOJI_CALENDARIO = "\u{1F4C5}";
+    const EMOJI_REP = "\u{1F464}";
+    const EMOJI_PACOTE = "\u{1F4E6}";
+    const EMOJI_ALERTA = "\u{26A0}\u{FE0F}";
 
-    const MSG_ROTA = `Olá, {cliente}! Aqui é da equipe Gelato da Fran 🍦.\n\nInformamos que as entregas da {rota} com nosso representante {representante} estão programadas para hoje! Caso precise de reposição rápida ou queira conferir seu pedido, estamos à disposição. Abraços!`;
+    const MSG_AVALIACAO = `Olá, {cliente}! Tudo bem? Aqui é da equipe Gelato da Fran ${EMOJI_SORVETE}.\n\nGostaríamos de saber como foi sua entrega recente com o representante {representante}. Leva menos de 1 minuto para avaliar no link:\n\n${EMOJI_DEDO} {link}\n\nMuito obrigado pela parceria!`;
+
+    const MSG_ROTA = `Olá, {cliente}! Aqui é da equipe Gelato da Fran ${EMOJI_SORVETE}.\n\nInformamos que as entregas da {rota} com nosso representante {representante} estão programadas para hoje! Caso precise de reposição rápida ou queira conferir seu pedido, estamos à disposição. Abraços!`;
 
     function carregarDadosIniciais() {
         fetch('/api/dados_cadastrados')
@@ -334,6 +356,70 @@
         }
     }
 
+    // ==========================================
+    // GERAÇÃO DO ROMANEIO PARA LOGÍSTICA
+    // ==========================================
+    function montarTextoRomaneio() {
+        const checkboxes = document.querySelectorAll('.chk-cliente:checked');
+        if (checkboxes.length === 0) {
+            alert("Selecione pelo menos um cliente na tabela para gerar o romaneio!");
+            return null;
+        }
+
+        const rotaSel = document.getElementById('filtro_rota').value || 'Todas as Rotas';
+        const repSel = document.getElementById('filtro_rep').value || 'Todos os Representantes';
+        
+        const hoje = new Date();
+        const dataFormatada = hoje.toLocaleDateString('pt-BR');
+
+        let selecionados = [];
+        checkboxes.forEach(chk => {
+            const c = todosClientes.find(item => item.id == chk.getAttribute('data-id'));
+            if (c) selecionados.push(c);
+        });
+
+        let texto = `${EMOJI_CAMINHAO} *ROMANEIO DE CARGA E ENTREGAS - GELATO DA FRAN* ${EMOJI_SORVETE}\n`;
+        texto += `${EMOJI_CALENDARIO} *Data:* ${dataFormatada}\n`;
+        texto += `${EMOJI_PIN} *Rota:* ${rotaSel}\n`;
+        texto += `${EMOJI_REP} *Representante:* ${repSel}\n`;
+        texto += `${EMOJI_PACOTE} *Total de Entregas:* ${selecionados.length} lojas selecionadas\n`;
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        texto += `📋 *RELAÇÃO DE CLIENTES / CONTATOS:*\n\n`;
+
+        selecionados.forEach((c, index) => {
+            texto += `${index + 1}. *${c.nome.toUpperCase()}*\n`;
+            texto += `   ${EMOJI_PIN} Cidade: ${c.cidade || 'Não informada'} / ${c.estado || 'RN'}\n`;
+            texto += `   ${EMOJI_FONE} Contato: ${c.whatsapp || 'Não informado'}\n\n`;
+        });
+
+        texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        texto += `${EMOJI_ALERTA} *Aviso Logística:* Motorista e conferência, favor checar os pedidos antes da saída do caminhão.`;
+
+        return texto;
+    }
+
+    function copiarRomaneioLogistica() {
+        const texto = montarTextoRomaneio();
+        if (!texto) return;
+
+        navigator.clipboard.writeText(texto).then(() => {
+            alert("📋 Romaneio copiado com sucesso!\n\nAgora basta colar (Ctrl+V) na conversa do WhatsApp com o seu grupo de logística.");
+        }).catch(() => {
+            // Fallback caso o navegador bloqueie clipboard direto
+            prompt("Copie o texto do romaneio abaixo (Ctrl+C):", texto);
+        });
+    }
+
+    function enviarRomaneioWhatsApp() {
+        const texto = montarTextoRomaneio();
+        if (!texto) return;
+        const urlWhats = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(urlWhats, '_blank');
+    }
+
+    // ==========================================
+    // FILA GUIADA DE DISPARO
+    // ==========================================
     function iniciarFilaGuiada() {
         const checkboxes = document.querySelectorAll('.chk-cliente:checked');
         if (checkboxes.length === 0) {
@@ -354,8 +440,8 @@
 
     function atualizarVisualFila() {
         if (indiceAtualFila >= filaEnvio.length) {
-            document.getElementById('filaTitulo').innerText = "🎉 Disparos da Rota Concluídos!";
-            document.getElementById('filaSubtitulo').innerText = `Todos os ${filaEnvio.length} clientes selecionados da rota foram acionados com sucesso.`;
+            document.getElementById('filaTitulo').innerText = "🎉 Disparos Concluídos!";
+            document.getElementById('filaSubtitulo').innerText = `Todos os ${filaEnvio.length} clientes selecionados foram acionados.`;
             document.getElementById('btnEnviarFila').style.display = 'none';
             return;
         }
