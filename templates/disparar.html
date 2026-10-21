@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 1050px; margin: 0 auto; }
+        .container { max-width: 1100px; margin: 0 auto; }
         
         .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-left: 6px solid #2563eb; flex-wrap: wrap; gap: 15px; }
         .logo-area { display: flex; align-items: center; gap: 15px; }
@@ -33,11 +33,21 @@
         .btn-proximo:hover { background: #059669; }
         .btn-parar { background: #64748b; color: white; padding: 8px 14px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; }
 
-        /* Tabela de Disparo por Rota */
+        /* Tabela e Reordenação */
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; margin-top: 15px; }
-        th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; }
+        th, td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
         th { background: #f8fafc; color: #475569; font-weight: 600; }
-        tr:hover { background: #f8fafc; }
+        
+        tr.linha-arrastavel { transition: background 0.15s; }
+        tr.linha-arrastavel:hover { background: #f8fafc; }
+        tr.dragging { opacity: 0.4; background: #dbeafe !important; }
+        tr.drag-over { border-top: 3px solid #2563eb !important; }
+        
+        .drag-handle { cursor: grab; font-size: 16px; color: #94a3b8; user-select: none; display: inline-block; padding: 2px 6px; }
+        .drag-handle:active { cursor: grabbing; }
+        .btn-ordem { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 11px; margin-right: 2px; }
+        .btn-ordem:hover { background: #e2e8f0; }
+
         .badge { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }
         .badge-aguardando { background: #f1f5f9; color: #475569; }
         .badge-enviado { background: #dcfce7; color: #166534; }
@@ -47,9 +57,9 @@
         
         .acoes-tabela { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .grupo-botoes-logistica { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn-logistica { background: #8b5cf6; color: white; padding: 10px 14px; border-radius: 8px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.15s; }
+        .btn-logistica { background: #8b5cf6; color: white; padding: 10px 14px; border-radius: 8px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         .btn-logistica:hover { background: #7c3aed; }
-        .btn-logistica-whats { background: #059669; color: white; padding: 10px 14px; border-radius: 8px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.15s; }
+        .btn-logistica-whats { background: #059669; color: white; padding: 10px 14px; border-radius: 8px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
         .btn-logistica-whats:hover { background: #047857; }
 
         .tipo-msg-box { display: flex; gap: 10px; margin-bottom: 10px; }
@@ -65,7 +75,7 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" style="height: 55px; width: auto; border-radius: 10px; object-fit: contain;">
             <div>
                 <h1>Central de Rotas e Disparos</h1>
-                <p>Gestão de Rotas (RN / PB / CE), Logística e Disparador Guiado</p>
+                <p>Organizador de Itinerário, Logística e Disparador</p>
             </div>
         </div>
         <div>
@@ -78,7 +88,7 @@
         <div class="card" style="margin-bottom: 0;">
             <h2>1. Cadastrar Nova Rota 🚚</h2>
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="nova_rota" placeholder="Ex: Rota de Sousa / Rota de Natal" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                <input type="text" id="nova_rota" placeholder="Ex: Rota de Sousa / Rota de Patos" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
                 <button class="btn-acao" style="background: #8b5cf6;" onclick="cadastrarRota()">Salvar Rota</button>
             </div>
         </div>
@@ -92,7 +102,7 @@
         </div>
     </div>
 
-    <!-- SEÇÃO 2: CADASTRO DE CLIENTE VINCULADO À ROTA -->
+    <!-- SEÇÃO 2: CADASTRO DE CLIENTE -->
     <div class="card">
         <h2>3. Cadastrar Cliente e Vincular na Rota 🏢</h2>
         <div class="form-grid">
@@ -132,11 +142,10 @@
         <button class="btn-acao" style="background: #10b981;" onclick="cadastrarCliente()">Salvar Cliente na Rota ✅</button>
     </div>
 
-    <!-- SEÇÃO 3: DISPARADOR WHATSAPP E ROMANEIO PARA LOGÍSTICA -->
+    <!-- SEÇÃO 3: DISPARADOR WHATSAPP E ROMANEIO COM ORDENAÇÃO -->
     <div class="card">
         <h2>4. Disparador WhatsApp e Romaneio de Carga 🚀</h2>
         
-        <!-- Filtros Rápidos -->
         <div class="form-grid">
             <div class="form-group">
                 <label>Filtrar por ROTA:</label>
@@ -156,9 +165,8 @@
             </div>
         </div>
 
-        <!-- Seletor do Tipo de Mensagem da Rota -->
         <div style="margin-top: 15px;">
-            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Escolha o Tipo de Mensagem para os Clientes:</label>
+            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Tipo de Mensagem para os Clientes:</label>
             <div class="tipo-msg-box">
                 <button type="button" class="btn-tipo-msg ativo" id="btnTipoAvaliacao" onclick="mudarTipoMensagem('avaliacao')">⭐ Mensagem de Avaliação de Entrega</button>
                 <button type="button" class="btn-tipo-msg" id="btnTipoRota" onclick="mudarTipoMensagem('rota')">🚚 Mensagem de Aviso de Entrega da Rota</button>
@@ -179,7 +187,7 @@
             </div>
         </div>
 
-        <!-- Ações da Tabela e Romaneio para Logística -->
+        <!-- Ações da Tabela -->
         <div class="acoes-tabela">
             <div>
                 <button class="btn-acao" style="background: #475569; padding: 7px 12px; font-size: 12px;" onclick="marcarTodos(true)">☑️ Marcar Todos</button>
@@ -192,10 +200,15 @@
             </div>
         </div>
 
-        <!-- Tabela de Lojas da Rota -->
+        <p style="font-size: 12px; color: #64748b; margin-top: 15px; margin-bottom: 5px;">
+            💡 <strong>Dica de Rota:</strong> Clique e arraste o ícone <strong>☰</strong> ou use os botões <strong>⬆️ / ⬇️</strong> para colocar as lojas na ordem exata de entrega antes de enviar o romaneio!
+        </p>
+
+        <!-- Tabela com Suporte a Drag-and-Drop -->
         <table>
             <thead>
                 <tr>
+                    <th style="width: 75px; text-align: center;">Ordem</th>
                     <th style="width: 40px; text-align: center;">Sel.</th>
                     <th>Loja / Cliente</th>
                     <th>Rota Vinculada</th>
@@ -207,7 +220,7 @@
             </thead>
             <tbody id="tabelaCorpo">
                 <tr>
-                    <td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Carregando dados da rota...</td>
+                    <td colspan="8" style="text-align: center; color: #64748b; padding: 20px;">Carregando dados da rota...</td>
                 </tr>
             </tbody>
         </table>
@@ -221,20 +234,9 @@
     let filaEnvio = [];
     let indiceAtualFila = 0;
 
-    // Emojis codificados em Unicode nativo para evitar o caractere  no WhatsApp
-    const EMOJI_SORVETE = "\u{1F366}";
-    const EMOJI_DEDO = "\u{1F449}";
-    const EMOJI_CAMINHAO = "\u{1F69A}";
-    const EMOJI_PIN = "\u{1F4CD}";
-    const EMOJI_FONE = "\u{1F4DE}";
-    const EMOJI_CALENDARIO = "\u{1F4C5}";
-    const EMOJI_REP = "\u{1F464}";
-    const EMOJI_PACOTE = "\u{1F4E6}";
-    const EMOJI_ALERTA = "\u{26A0}\u{FE0F}";
+    const MSG_AVALIACAO = `Olá, {cliente}! Tudo bem? Aqui é da equipe Gelato da Fran 🍦.\n\nGostaríamos de saber como foi sua entrega recente com o representante {representante}. Leva menos de 1 minuto para avaliar no link:\n\n👉 {link}\n\nMuito obrigado pela parceria!`;
 
-    const MSG_AVALIACAO = `Olá, {cliente}! Tudo bem? Aqui é da equipe Gelato da Fran ${EMOJI_SORVETE}.\n\nGostaríamos de saber como foi sua entrega recente com o representante {representante}. Leva menos de 1 minuto para avaliar no link:\n\n${EMOJI_DEDO} {link}\n\nMuito obrigado pela parceria!`;
-
-    const MSG_ROTA = `Olá, {cliente}! Aqui é da equipe Gelato da Fran ${EMOJI_SORVETE}.\n\nInformamos que as entregas da {rota} com nosso representante {representante} estão programadas para hoje! Caso precise de reposição rápida ou queira conferir seu pedido, estamos à disposição. Abraços!`;
+    const MSG_ROTA = `Olá, {cliente}! Aqui é da equipe Gelato da Fran 🍦.\n\nInformamos que as entregas da {rota} com nosso representante {representante} estão programadas para hoje! Caso precise de reposição rápida ou queira conferir seu pedido, estamos à disposição. Abraços!`;
 
     function carregarDadosIniciais() {
         fetch('/api/dados_cadastrados')
@@ -303,27 +305,95 @@
         });
 
         if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente encontrado nessa rota.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente encontrado nessa rota.</td></tr>';
             return;
         }
 
         filtrados.forEach((c) => {
-            tbody.innerHTML += `
-                <tr id="linha_cliente_${c.id}">
-                    <td style="text-align: center;">
-                        <input type="checkbox" class="chk-cliente" data-id="${c.id}" checked>
-                    </td>
-                    <td><strong>${c.nome}</strong></td>
-                    <td><span class="badge badge-rota">${c.rota || 'Geral'}</span></td>
-                    <td>${c.cidade || '-'} / ${c.estado || 'RN'}</td>
-                    <td>${c.whatsapp || '-'}</td>
-                    <td><span class="badge badge-aguardando" id="status_${c.id}">Aguardando</span></td>
-                    <td style="text-align: center;">
-                        <button class="btn-mini" onclick="enviarIndividual('${c.id}')">📲 Enviar</button>
-                    </td>
-                </tr>
+            const tr = document.createElement('tr');
+            tr.className = 'linha-arrastavel';
+            tr.draggable = true;
+            tr.setAttribute('data-id', c.id);
+
+            tr.innerHTML = `
+                <td style="text-align: center; white-space: nowrap;">
+                    <span class="drag-handle" title="Arraste para mudar a ordem">☰</span>
+                    <button type="button" class="btn-ordem" onclick="moverLinha(this, -1)">⬆️</button>
+                    <button type="button" class="btn-ordem" onclick="moverLinha(this, 1)">⬇️</button>
+                </td>
+                <td style="text-align: center;">
+                    <input type="checkbox" class="chk-cliente" data-id="${c.id}" checked>
+                </td>
+                <td><strong>${c.nome}</strong></td>
+                <td><span class="badge badge-rota">${c.rota || 'Geral'}</span></td>
+                <td>${c.cidade || '-'} / ${c.estado || 'RN'}</td>
+                <td>${c.whatsapp || '-'}</td>
+                <td><span class="badge badge-aguardando" id="status_${c.id}">Aguardando</span></td>
+                <td style="text-align: center;">
+                    <button class="btn-mini" onclick="enviarIndividual('${c.id}')">📲 Enviar</button>
+                </td>
             `;
+
+            configurarEventosDrag(tr);
+            tbody.appendChild(tr);
         });
+    }
+
+    // Gerenciador de arrastar e soltar (Drag and Drop nativo)
+    let linhaArrastada = null;
+
+    function configurarEventosDrag(tr) {
+        tr.addEventListener('dragstart', (e) => {
+            linhaArrastada = tr;
+            tr.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        tr.addEventListener('dragend', () => {
+            if (linhaArrastada) linhaArrastada.classList.remove('dragging');
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            linhaArrastada = null;
+        });
+
+        tr.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (linhaArrastada && linhaArrastada !== tr) {
+                tr.classList.add('drag-over');
+            }
+        });
+
+        tr.addEventListener('dragleave', () => {
+            tr.classList.remove('drag-over');
+        });
+
+        tr.addEventListener('drop', (e) => {
+            e.preventDefault();
+            tr.classList.remove('drag-over');
+            if (linhaArrastada && linhaArrastada !== tr) {
+                const tbody = document.getElementById('tabelaCorpo');
+                const linhas = Array.from(tbody.querySelectorAll('tr.linha-arrastavel'));
+                const indexArrastada = linhas.indexOf(linhaArrastada);
+                const indexAlvo = linhas.indexOf(tr);
+
+                if (indexArrastada < indexAlvo) {
+                    tbody.insertBefore(linhaArrastada, tr.nextSibling);
+                } else {
+                    tbody.insertBefore(linhaArrastada, tr);
+                }
+            }
+        });
+    }
+
+    // Botões de subir e descer linha (ideal para telas touch/mobile)
+    function moverLinha(botao, direcao) {
+        const linha = botao.closest('tr');
+        const tbody = document.getElementById('tabelaCorpo');
+        if (direcao === -1 && linha.previousElementSibling) {
+            tbody.insertBefore(linha, linha.previousElementSibling);
+        } else if (direcao === 1 && linha.nextElementSibling) {
+            tbody.insertBefore(linha.nextElementSibling, linha);
+        }
     }
 
     function marcarTodos(status) {
@@ -342,7 +412,7 @@
                      .replace(/{representante}/g, c.representante || 'Geral')
                      .replace(/{link}/g, baseLink);
 
-        return `https://wa.me/${fone}?text=${encodeURIComponent(texto)}`;
+        return `https://api.whatsapp.com/send?phone=${fone}&text=${encodeURIComponent(texto)}`;
     }
 
     function enviarIndividual(id) {
@@ -356,44 +426,50 @@
         }
     }
 
-    // ==========================================
-    // GERAÇÃO DO ROMANEIO PARA LOGÍSTICA
-    // ==========================================
+    // Pega a lista exatamente na ordem visual da tabela (respeitando o arrastar e soltar)
+    function obterClientesOrdenadosSelecionados() {
+        const linhas = document.querySelectorAll('#tabelaCorpo tr.linha-arrastavel');
+        let selecionados = [];
+
+        linhas.forEach(linha => {
+            const chk = linha.querySelector('.chk-cliente');
+            if (chk && chk.checked) {
+                const id = chk.getAttribute('data-id');
+                const c = todosClientes.find(item => item.id == id);
+                if (c) selecionados.push(c);
+            }
+        });
+
+        return selecionados;
+    }
+
     function montarTextoRomaneio() {
-        const checkboxes = document.querySelectorAll('.chk-cliente:checked');
-        if (checkboxes.length === 0) {
+        const selecionados = obterClientesOrdenadosSelecionados();
+        if (selecionados.length === 0) {
             alert("Selecione pelo menos um cliente na tabela para gerar o romaneio!");
             return null;
         }
 
         const rotaSel = document.getElementById('filtro_rota').value || 'Todas as Rotas';
         const repSel = document.getElementById('filtro_rep').value || 'Todos os Representantes';
-        
-        const hoje = new Date();
-        const dataFormatada = hoje.toLocaleDateString('pt-BR');
+        const dataFormatada = new Date().toLocaleDateString('pt-BR');
 
-        let selecionados = [];
-        checkboxes.forEach(chk => {
-            const c = todosClientes.find(item => item.id == chk.getAttribute('data-id'));
-            if (c) selecionados.push(c);
-        });
-
-        let texto = `${EMOJI_CAMINHAO} *ROMANEIO DE CARGA E ENTREGAS - GELATO DA FRAN* ${EMOJI_SORVETE}\n`;
-        texto += `${EMOJI_CALENDARIO} *Data:* ${dataFormatada}\n`;
-        texto += `${EMOJI_PIN} *Rota:* ${rotaSel}\n`;
-        texto += `${EMOJI_REP} *Representante:* ${repSel}\n`;
-        texto += `${EMOJI_PACOTE} *Total de Entregas:* ${selecionados.length} lojas selecionadas\n`;
+        let texto = `🚚 *ROMANEIO DE CARGA E ENTREGAS - GELATO DA FRAN* 🍦\n`;
+        texto += `📅 *Data:* ${dataFormatada}\n`;
+        texto += `📍 *Rota:* ${rotaSel}\n`;
+        texto += `👤 *Representante:* ${repSel}\n`;
+        texto += `📦 *Total de Entregas:* ${selecionados.length} lojas programadas\n`;
         texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `📋 *RELAÇÃO DE CLIENTES / CONTATOS:*\n\n`;
+        texto += `📋 *ORDEM DE ENTREGA (ITINERÁRIO):*\n\n`;
 
         selecionados.forEach((c, index) => {
             texto += `${index + 1}. *${c.nome.toUpperCase()}*\n`;
-            texto += `   ${EMOJI_PIN} Cidade: ${c.cidade || 'Não informada'} / ${c.estado || 'RN'}\n`;
-            texto += `   ${EMOJI_FONE} Contato: ${c.whatsapp || 'Não informado'}\n\n`;
+            texto += `   📍 Cidade: ${c.cidade || 'Não informada'} / ${c.estado || 'RN'}\n`;
+            texto += `   📞 Contato: ${c.whatsapp || 'Não informado'}\n\n`;
         });
 
         texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `${EMOJI_ALERTA} *Aviso Logística:* Motorista e conferência, favor checar os pedidos antes da saída do caminhão.`;
+        texto += `⚠️ *Aviso Logística:* Motorista e conferência, favor checar os pedidos antes da saída do caminhão.`;
 
         return texto;
     }
@@ -403,9 +479,8 @@
         if (!texto) return;
 
         navigator.clipboard.writeText(texto).then(() => {
-            alert("📋 Romaneio copiado com sucesso!\n\nAgora basta colar (Ctrl+V) na conversa do WhatsApp com o seu grupo de logística.");
+            alert("📋 Romaneio na ordem correta copiado com sucesso!\n\nAgora basta colar (Ctrl+V) no WhatsApp do grupo de logística.");
         }).catch(() => {
-            // Fallback caso o navegador bloqueie clipboard direto
             prompt("Copie o texto do romaneio abaixo (Ctrl+C):", texto);
         });
     }
@@ -413,25 +488,17 @@
     function enviarRomaneioWhatsApp() {
         const texto = montarTextoRomaneio();
         if (!texto) return;
-        const urlWhats = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        const urlWhats = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
         window.open(urlWhats, '_blank');
     }
 
-    // ==========================================
-    // FILA GUIADA DE DISPARO
-    // ==========================================
+    // Fila guiada também segue a nova ordem personalizada
     function iniciarFilaGuiada() {
-        const checkboxes = document.querySelectorAll('.chk-cliente:checked');
-        if (checkboxes.length === 0) {
+        filaEnvio = obterClientesOrdenadosSelecionados();
+        if (filaEnvio.length === 0) {
             alert("Selecione pelo menos um cliente para iniciar o disparo!");
             return;
         }
-
-        filaEnvio = [];
-        checkboxes.forEach(chk => {
-            const c = todosClientes.find(item => item.id == chk.getAttribute('data-id'));
-            if (c) filaEnvio.push(c);
-        });
 
         indiceAtualFila = 0;
         document.getElementById('caixaFila').style.display = 'flex';
@@ -440,15 +507,15 @@
 
     function atualizarVisualFila() {
         if (indiceAtualFila >= filaEnvio.length) {
-            document.getElementById('filaTitulo').innerText = "🎉 Disparos Concluídos!";
-            document.getElementById('filaSubtitulo').innerText = `Todos os ${filaEnvio.length} clientes selecionados foram acionados.`;
+            document.getElementById('filaTitulo').innerText = "🎉 Disparos da Rota Concluídos!";
+            document.getElementById('filaSubtitulo').innerText = `Todos os ${filaEnvio.length} clientes da rota foram acionados.`;
             document.getElementById('btnEnviarFila').style.display = 'none';
             return;
         }
 
         const atual = filaEnvio[indiceAtualFila];
         document.getElementById('btnEnviarFila').style.display = 'inline-block';
-        document.getElementById('filaTitulo').innerText = `Envio ${indiceAtualFila + 1} de ${filaEnvio.length}: ${atual.nome}`;
+        document.getElementById('filaTitulo').innerText = `Parada ${indiceAtualFila + 1} de ${filaEnvio.length}: ${atual.nome}`;
         document.getElementById('filaSubtitulo').innerText = `Rota: ${atual.rota || 'Geral'} • Cidade: ${atual.cidade || ''}/${atual.estado || 'RN'}`;
         document.getElementById('btnEnviarFila').innerText = `📲 Abrir WhatsApp de ${atual.nome}`;
     }
@@ -477,7 +544,7 @@
 
     function cadastrarRota() {
         const nome = document.getElementById('nova_rota').value.trim();
-        if (!nome) { alert("Digite o nome da rota! (Ex: Rota de Sousa)"); return; }
+        if (!nome) { alert("Digite o nome da rota!"); return; }
 
         fetch('/api/cadastrar_rota', {
             method: 'POST',
@@ -535,7 +602,7 @@
         .then(res => res.json())
         .then(res => {
             if (res.status === 'sucesso') {
-                alert("Cliente cadastrado e vinculado à rota com sucesso!");
+                alert("Cliente cadastrado na rota com sucesso!");
                 document.getElementById('cad_nome').value = '';
                 document.getElementById('cad_cidade').value = '';
                 document.getElementById('cad_whatsapp').value = '';
