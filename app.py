@@ -27,7 +27,13 @@ class RepresentanteModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
 
-# Tabela de Clientes/Lojas (Com Cidade e Estado para rotas RN/PB)
+# Tabela de Rotas Cadastradas (Ex: Rota de Natal, Rota de Sousa, Rota de Fortaleza)
+class RotaModel(db.Model):
+    __tablename__ = 'rota_model'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
+
+# Tabela de Clientes/Lojas (Com Rota, Cidade e Estado)
 class ClienteModel(db.Model):
     __tablename__ = 'cliente_model'
     id = db.Column(db.Integer, primary_key=True)
@@ -36,6 +42,7 @@ class ClienteModel(db.Model):
     representante = db.Column(db.String(100), nullable=True)
     cidade = db.Column(db.String(100), nullable=True)
     estado = db.Column(db.String(10), nullable=True)
+    rota = db.Column(db.String(100), nullable=True)
 
 # Tabela de Feedbacks / Avaliações dos Clientes
 class Feedback(db.Model):
@@ -86,6 +93,9 @@ with app.app_context():
                 if 'estado' not in col_cl:
                     conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN estado VARCHAR(10)'))
                     conn.commit()
+                if 'rota' not in col_cl:
+                    conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN rota VARCHAR(100)'))
+                    conn.commit()
     except Exception as e:
         print("Aviso na checagem de colunas:", str(e))
 
@@ -96,7 +106,7 @@ def avaliacao():
     cliente = request.args.get('cliente', 'Cliente')
     return render_template('avaliacao.html', representante=representante, cliente=cliente)
 
-# Rota para Cadastrar Representante
+# Cadastrar Representante
 @app.route('/api/cadastrar_representante', methods=['POST'])
 def cadastrar_representante():
     dados = request.json
@@ -112,7 +122,23 @@ def cadastrar_representante():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Cadastrar Cliente
+# Cadastrar Nova Rota (Ex: Rota de Sousa, Rota de Natal)
+@app.route('/api/cadastrar_rota', methods=['POST'])
+def cadastrar_rota():
+    dados = request.json
+    nome = dados.get('nome', '').strip()
+    if not nome:
+        return jsonify({'status': 'erro', 'mensagem': 'Nome da rota obrigatório'}), 400
+    try:
+        existe = RotaModel.query.filter_by(nome=nome).first()
+        if not existe:
+            db.session.add(RotaModel(nome=nome))
+            db.session.commit()
+        return jsonify({'status': 'sucesso'})
+    except Exception as e:
+        return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
+
+# Cadastrar Cliente com Rota
 @app.route('/api/cadastrar_cliente', methods=['POST'])
 def cadastrar_cliente():
     dados = request.json
@@ -121,6 +147,7 @@ def cadastrar_cliente():
     representante = dados.get('representante', '').strip()
     cidade = dados.get('cidade', '').strip()
     estado = dados.get('estado', '').strip()
+    rota = dados.get('rota', '').strip()
     
     if not nome:
         return jsonify({'status': 'erro', 'mensagem': 'Nome do cliente obrigatório'}), 400
@@ -130,7 +157,8 @@ def cadastrar_cliente():
             whatsapp=whatsapp, 
             representante=representante,
             cidade=cidade,
-            estado=estado
+            estado=estado,
+            rota=rota
         )
         db.session.add(novo)
         db.session.commit()
@@ -138,7 +166,7 @@ def cadastrar_cliente():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Verificar Senha Única de Acesso aos Clientes
+# Verificar Senha do Administrador
 @app.route('/api/verificar_senha', methods=['POST'])
 def verificar_senha():
     dados = request.json
@@ -148,7 +176,7 @@ def verificar_senha():
         return jsonify({'status': 'sucesso'})
     return jsonify({'status': 'erro', 'mensagem': 'Senha incorreta!'}), 403
 
-# Rota para Editar Cliente Cadastrado
+# Editar Cliente (Permitindo trocar a rota facilmente)
 @app.route('/api/editar_cliente', methods=['POST'])
 def editar_cliente():
     if not session.get('admin_autorizado'):
@@ -166,18 +194,18 @@ def editar_cliente():
         cliente.representante = dados.get('representante', cliente.representante).strip()
         cliente.cidade = dados.get('cidade', cliente.cidade).strip()
         cliente.estado = dados.get('estado', cliente.estado).strip()
+        cliente.rota = dados.get('rota', cliente.rota).strip()
         
         db.session.commit()
         return jsonify({'status': 'sucesso'})
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Zerar apenas os Feedbacks de Teste (Protegido por Senha)
+# Zerar Feedbacks de Teste (Protegido por Senha)
 @app.route('/api/zerar_feedbacks', methods=['POST'])
 def zerar_feedbacks():
     dados = request.json
     senha = dados.get('senha', '')
-    
     if senha != SENHA_ADMIN:
         return jsonify({'status': 'erro', 'mensagem': 'Senha de administrador incorreta!'}), 403
     
@@ -188,21 +216,23 @@ def zerar_feedbacks():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para buscar dados salvos no disparador
+# Retornar Dados Cadastrados (Clientes, Representantes e Rotas)
 @app.route('/api/dados_cadastrados')
 def dados_cadastrados():
-    reps = [r.nome for r in RepresentanteModel.query.all()]
+    reps = [r.nome for r in RepresentanteModel.query.order_by(RepresentanteModel.nome).all()]
+    rotas = [r.nome for r in RotaModel.query.order_by(RotaModel.nome).all()]
     clientes = [{
         'id': c.id, 
         'nome': c.nome, 
         'whatsapp': c.whatsapp, 
         'representante': c.representante,
         'cidade': c.cidade or 'Não informada',
-        'estado': c.estado or 'RN'
+        'estado': c.estado or 'RN',
+        'rota': c.rota or 'Geral'
     } for c in ClienteModel.query.all()]
-    return jsonify({'representantes': reps, 'clientes': clientes})
+    return jsonify({'representantes': reps, 'rotas': rotas, 'clientes': clientes})
 
-# Rota para Salvar o Feedback
+# Salvar Feedback
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
@@ -232,13 +262,12 @@ def salvar():
         print("Erro ao salvar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Função auxiliar segura para formatar CSV para Excel
+# Exportar CSV para Excel
 def escape_csv(val):
     val_str = str(val or '')
     val_str = val_str.replace('"', '""').replace('\n', ' ')
     return f'"{val_str}"'
 
-# Rota para Exportar Relatório em CSV (Compatível com Excel)
 @app.route('/exportar_csv')
 def exportar_csv():
     try:
@@ -269,7 +298,7 @@ def exportar_csv():
     except Exception as e:
         return str(e), 500
 
-# Painel de Gestão e Resultados
+# Painel
 @app.route('/painel')
 def painel():
     try:
@@ -280,19 +309,20 @@ def painel():
         feedbacks, representantes = [], []
     return render_template('painel.html', feedbacks=feedbacks, representantes=representantes)
 
-# Tela Dedicada de Gerenciamento de Clientes (Protegida por Sessão)
+# Tela de Clientes
 @app.route('/clientes')
 def clientes():
     if not session.get('admin_autorizado'):
         return redirect(url_for('painel'))
     try:
         lista_clientes = ClienteModel.query.order_by(ClienteModel.nome).all()
+        rotas = [r.nome for r in RotaModel.query.order_by(RotaModel.nome).all()]
     except Exception as e:
         print("Erro ao carregar clientes:", str(e))
-        lista_clientes = []
-    return render_template('clientes.html', clientes=lista_clientes)
+        lista_clientes, rotas = [], []
+    return render_template('clientes.html', clientes=lista_clientes, rotas=rotas)
 
-# Tela do Disparador WhatsApp e Cadastros
+# Tela do Disparador
 @app.route('/disparar')
 def disparar():
     return render_template('disparar.html')
