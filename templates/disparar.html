@@ -6,139 +6,336 @@
     <title>Rotas e Disparador - Gelato da Fran 🍦</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: #eff6ff; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #fff; padding: 25px; border-radius: 18px; box-shadow: 0 10px 25px rgba(30, 64, 175, 0.08); border-top: 6px solid #2563eb; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h2 { color: #1e3a8a; margin: 0 0 8px; font-size: 22px; }
-        .header p { color: #475569; font-size: 14px; margin: 0; }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label { display: block; font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 6px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; background: #f8fafc; }
-        .form-group input:focus, .form-group select:focus { border-color: #2563eb; background: #fff; }
-        .row-dupla { display: flex; gap: 10px; }
-        .row-dupla .form-group { flex: 1; }
-        button.btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); margin-top: 5px; transition: 0.15s; }
-        button.btn:hover { background: #1d4ed8; }
-        button.btn-zap { background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 12px; }
-        button.btn-zap:hover { background: #059669; }
-        .resultado { margin-top: 15px; padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: none; text-align: center; }
-        .resultado p { font-size: 14px; color: #166534; margin: 0 0 10px 0; word-break: break-all; }
+        body { background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-left: 6px solid #2563eb; flex-wrap: wrap; gap: 15px; }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .header-painel h1 { margin: 0; font-size: 22px; color: #1e3a8a; }
+        .header-painel p { margin: 3px 0 0 0; font-size: 13px; color: #64748b; }
+        .btn-acao { background: #2563eb; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; }
+        .btn-acao:hover { background: #1d4ed8; }
+
+        .card { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .card h2 { margin-top: 0; color: #1e3a8a; font-size: 18px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; background: #f8fafc; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #2563eb; background: #fff; }
+
+        /* Barra de Fila Ativa */
+        .fila-box { background: #eff6ff; border: 2px solid #3b82f6; border-radius: 12px; padding: 18px; margin-bottom: 20px; display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        .fila-info h3 { margin: 0; color: #1e3a8a; font-size: 16px; }
+        .fila-info p { margin: 3px 0 0 0; color: #475569; font-size: 13px; }
+        .btn-proximo { background: #10b981; color: white; padding: 12px 22px; font-size: 15px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-proximo:hover { background: #059669; }
+        .btn-parar { background: #64748b; color: white; padding: 8px 14px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; }
+
+        /* Tabela de Disparo por Rota */
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; margin-top: 15px; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; color: #475569; font-weight: 600; }
+        tr:hover { background: #f8fafc; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }
+        .badge-aguardando { background: #f1f5f9; color: #475569; }
+        .badge-enviado { background: #dcfce7; color: #166534; }
+        .btn-mini { background: #2563eb; color: white; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-mini:hover { background: #1d4ed8; }
+        .acoes-tabela { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- CARD 1: CADASTRO DE REPRESENTANTE -->
-    <div class="card">
-        <div class="header" style="margin-bottom: 12px;">
-            <h2>1. Cadastrar Representante</h2>
+    <div class="header-painel">
+        <div class="logo-area">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" style="height: 55px; width: auto; border-radius: 10px; object-fit: contain;">
+            <div>
+                <h1>Central de Disparos por Rota</h1>
+                <p>Envio Guiado de Links de Avaliação (RN e PB)</p>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="novo_rep">Nome do Representante:</label>
-            <input type="text" id="novo_rep" placeholder="Ex: Marcio">
+        <div>
+            <a href="/painel" class="btn-acao">📊 Ir para o Painel</a>
         </div>
-        <button class="btn" onclick="cadastrarRepresentante()">Salvar Representante 👤</button>
     </div>
 
-    <!-- CARD 2: CADASTRO DE CLIENTE / ROTA (RN e PB) -->
+    <!-- SEÇÃO 1: CADASTRO RÁPIDO DE REPRESENTANTE -->
     <div class="card">
-        <div class="header" style="margin-bottom: 12px;">
-            <h2>2. Cadastrar Cliente e Rota</h2>
+        <h2>1. Cadastrar Representante</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="novo_rep" placeholder="Nome do representante (Ex: Arthur)" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+            <button class="btn-acao" onclick="cadastrarRepresentante()">Salvar Representante 👤</button>
         </div>
-        <div class="form-group">
-            <label for="novo_cliente_nome">Nome do Cliente / Loja:</label>
-            <input type="text" id="novo_cliente_nome" placeholder="Ex: Panificadora Sabor">
-        </div>
-        <div class="row-dupla">
+    </div>
+
+    <!-- SEÇÃO 2: CADASTRO DE CLIENTE E ROTA -->
+    <div class="card">
+        <h2>2. Cadastrar Cliente e Rota</h2>
+        <div class="form-grid">
             <div class="form-group">
-                <label for="novo_cliente_cidade">Cidade:</label>
-                <input type="text" id="novo_cliente_cidade" placeholder="Ex: Caicó">
+                <label>Nome do Cliente / Loja:</label>
+                <input type="text" id="cad_nome" placeholder="Ex: Supermercado Central">
             </div>
             <div class="form-group">
-                <label for="novo_cliente_estado">Estado (Rota):</label>
-                <select id="novo_cliente_estado">
+                <label>Cidade:</label>
+                <input type="text" id="cad_cidade" placeholder="Ex: Pombal">
+            </div>
+            <div class="form-group">
+                <label>Estado (Rota):</label>
+                <select id="cad_estado">
                     <option value="RN">RN (Rio Grande do Norte)</option>
                     <option value="PB">PB (Paraíba)</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>WhatsApp (DDD + Número):</label>
+                <input type="text" id="cad_whatsapp" placeholder="Ex: 83999999999">
+            </div>
+            <div class="form-group">
+                <label>Representante Responsável:</label>
+                <select id="cad_rep">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="novo_cliente_zap">WhatsApp (Apenas números com DDD):</label>
-            <input type="text" id="novo_cliente_zap" placeholder="Ex: 84999999999">
-        </div>
-        <div class="form-group">
-            <label for="select_rep_cliente">Representante Responsável:</label>
-            <select id="select_rep_cliente">
-                <option value="">Selecione o representante...</option>
-            </select>
-        </div>
-        <button class="btn" onclick="cadastrarCliente()">Salvar Cliente na Rota 🏢</button>
+        <button class="btn-acao" style="background: #10b981;" onclick="cadastrarCliente()">Salvar Cliente na Rota 🏢</button>
     </div>
 
-    <!-- CARD 3: DISPARADOR WHATSAPP -->
+    <!-- SEÇÃO 3: DISPARADOR AUTOMÁTICO EM FILA GUIADA -->
     <div class="card">
-        <div class="header">
-            <h2>3. Disparador WhatsApp 🚀</h2>
-            <p>Selecione o cliente por cidade/estado para enviar.</p>
+        <h2>3. Disparador WhatsApp por Rota 🚀</h2>
+        
+        <!-- Filtros Rápidos de Rota -->
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Filtrar por Representante:</label>
+                <select id="filtro_rep" onchange="renderizarTabela()">
+                    <option value="">Todos os Representantes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Filtrar por Estado (Rota):</label>
+                <select id="filtro_estado" onchange="renderizarTabela()">
+                    <option value="">Todos os Estados (RN e PB)</option>
+                    <option value="RN">RN (Rio Grande do Norte)</option>
+                    <option value="PB">PB (Paraíba)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Buscar por Cidade ou Loja:</label>
+                <input type="text" id="filtro_busca" placeholder="Digite para buscar..." onkeyup="renderizarTabela()">
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="select_cliente_envio">Selecione o Cliente (Cidade - Estado):</label>
-            <select id="select_cliente_envio" onchange="preencherDadosEnvio()">
-                <option value="">Escolha um cliente cadastrado...</option>
-            </select>
+        <!-- Modelo de Mensagem -->
+        <div class="form-group" style="margin-top: 10px;">
+            <label>Modelo da Mensagem do WhatsApp (Use {cliente}, {representante} e {link}):</label>
+            <textarea id="msg_template" rows="3">Olá, {cliente}! Tudo bem? Aqui é da equipe Gelato da Fran 🍦.
+
+Gostaríamos de saber como foi sua entrega recente com o representante {representante}. Leva menos de 1 minuto para avaliar no link:
+
+👉 {link}
+
+Muito obrigado pela parceria!</textarea>
         </div>
 
-        <div class="form-group">
-            <label for="representante_envio">Representante:</label>
-            <input type="text" id="representante_envio" readonly style="background: #e2e8f0;">
+        <!-- Painel Flutuante da Fila Guiada -->
+        <div class="fila-box" id="caixaFila">
+            <div class="fila-info">
+                <h3 id="filaTitulo">Fila de Disparo Ativa</h3>
+                <p id="filaSubtitulo">Preparando envio...</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn-proximo" id="btnEnviarFila" onclick="dispararAtualDaFila()">📲 Abrir WhatsApp do Próximo</button>
+                <button class="btn-parar" onclick="pararFila()">Encerrar Fila</button>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="cliente_envio">Cliente / Loja (Local):</label>
-            <input type="text" id="cliente_envio" readonly style="background: #e2e8f0;">
+        <!-- Ações da Tabela -->
+        <div class="acoes-tabela">
+            <div>
+                <button class="btn-acao" style="background: #475569; padding: 7px 12px; font-size: 12px;" onclick="marcarTodos(true)">☑️ Marcar Todos</button>
+                <button class="btn-acao" style="background: #64748b; padding: 7px 12px; font-size: 12px;" onclick="marcarTodos(false)">⬜ Desmarcar Todos</button>
+            </div>
+            <button class="btn-acao" style="background: #10b981; font-size: 15px;" onclick="iniciarFilaGuiada()">⚡ Iniciar Disparo em Fila da Rota</button>
         </div>
 
-        <div class="form-group">
-            <label for="telefone_envio">WhatsApp:</label>
-            <input type="text" id="telefone_envio" placeholder="Ex: 84999999999">
-        </div>
-
-        <button class="btn" onclick="gerarLink()">Gerar Link de Avaliação 🔗</button>
-
-        <div class="resultado" id="box-resultado">
-            <p id="link-gerado"></p>
-            <button class="btn btn-zap" onclick="enviarWhatsApp()">Enviar no WhatsApp 💚</button>
-        </div>
+        <!-- Tabela de Lojas da Rota -->
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px; text-align: center;">Sel.</th>
+                    <th>Loja / Cliente</th>
+                    <th>Cidade / Estado</th>
+                    <th>WhatsApp</th>
+                    <th>Representante</th>
+                    <th>Status</th>
+                    <th style="text-align: center;">Ação</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCorpo">
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Carregando clientes...</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    let urlFinal = "";
-    let listaClientesGlobal = [];
+    let todosClientes = [];
+    let todosReps = [];
+    let filaEnvio = [];
+    let indiceAtualFila = 0;
 
-    window.onload = function() {
-        carregarDados();
-    };
-
-    function carregarDados() {
+    function carregarDadosIniciais() {
         fetch('/api/dados_cadastrados')
-        .then(res => res.json())
-        .then(data => {
-            const selectRepCliente = document.getElementById('select_rep_cliente');
-            selectRepCliente.innerHTML = '<option value="">Selecione o representante...</option>';
-            data.representantes.forEach(rep => {
-                selectRepCliente.innerHTML += `<option value="${rep}">${rep}</option>`;
-            });
+            .then(res => res.json())
+            .then(data => {
+                todosClientes = data.clientes || [];
+                todosReps = data.representantes || [];
 
-            const selectClienteEnvio = document.getElementById('select_cliente_envio');
-            selectClienteEnvio.innerHTML = '<option value="">Escolha um cliente cadastrado...</option>';
-            listaClientesGlobal = data.clientes;
-            data.clientes.forEach(c => {
-                selectClienteEnvio.innerHTML += `<option value="${c.id}">${c.nome} — ${c.cidade}/${c.estado} (${c.representante || 'Geral'})</option>`;
+                atualizarSelectsRepresentantes();
+                renderizarTabela();
             });
+    }
+
+    function atualizarSelectsRepresentantes() {
+        const cadRep = document.getElementById('cad_rep');
+        const filtroRep = document.getElementById('filtro_rep');
+
+        cadRep.innerHTML = '<option value="">Selecione o representante...</option>';
+        filtroRep.innerHTML = '<option value="">Todos os Representantes</option>';
+
+        todosReps.forEach(rep => {
+            cadRep.innerHTML += `<option value="${rep}">${rep}</option>`;
+            filtroRep.innerHTML += `<option value="${rep}">${rep}</option>`;
         });
+    }
+
+    function renderizarTabela() {
+        const fRep = document.getElementById('filtro_rep').value;
+        const fEst = document.getElementById('filtro_estado').value;
+        const fBusca = document.getElementById('filtro_busca').value.toLowerCase();
+
+        const tbody = document.getElementById('tabelaCorpo');
+        tbody.innerHTML = '';
+
+        let filtrados = todosClientes.filter(c => {
+            let matchRep = !fRep || c.representante === fRep;
+            let matchEst = !fEst || (c.estado || 'RN') === fEst;
+            let matchBusca = !fBusca || c.nome.toLowerCase().includes(fBusca) || (c.cidade || '').toLowerCase().includes(fBusca);
+            return matchRep && matchEst && matchBusca;
+        });
+
+        if (filtrados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente encontrado nessa rota.</td></tr>';
+            return;
+        }
+
+        filtrados.forEach((c, idx) => {
+            tbody.innerHTML += `
+                <tr id="linha_cliente_${c.id}">
+                    <td style="text-align: center;">
+                        <input type="checkbox" class="chk-cliente" data-id="${c.id}" checked>
+                    </td>
+                    <td><strong>${c.nome}</strong></td>
+                    <td>${c.cidade || '-'} / ${c.estado || 'RN'}</td>
+                    <td>${c.whatsapp || '-'}</td>
+                    <td>${c.representante || 'Geral'}</td>
+                    <td><span class="badge badge-aguardando" id="status_${c.id}">Aguardando</span></td>
+                    <td style="text-align: center;">
+                        <button class="btn-mini" onclick="enviarIndividual('${c.id}')">📲 Enviar</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function marcarTodos(status) {
+        document.querySelectorAll('.chk-cliente').forEach(chk => chk.checked = status);
+    }
+
+    function gerarLinkWhatsApp(c) {
+        let fone = (c.whatsapp || '').replace(/\D/g, '');
+        if (!fone.startsWith('55') && fone.length <= 11) fone = '55' + fone;
+
+        const baseLink = window.location.origin + '/?rep=' + encodeURIComponent(c.representante || 'Geral') + '&cliente=' + encodeURIComponent(c.nome);
+        let texto = document.getElementById('msg_template').value;
+        texto = texto.replace('{cliente}', c.nome)
+                     .replace('{representante}', c.representante || 'Geral')
+                     .replace('{link}', baseLink);
+
+        return `https://wa.me/${fone}?text=${encodeURIComponent(texto)}`;
+    }
+
+    function enviarIndividual(id) {
+        const c = todosClientes.find(item => item.id == id);
+        if (!c) return;
+        window.open(gerarLinkWhatsApp(c), '_blank');
+        const st = document.getElementById('status_' + id);
+        if (st) {
+            st.className = 'badge badge-enviado';
+            st.innerText = '✅ Enviado';
+        }
+    }
+
+    function iniciarFilaGuiada() {
+        const checkboxes = document.querySelectorAll('.chk-cliente:checked');
+        if (checkboxes.length === 0) {
+            alert("Selecione pelo menos um cliente para iniciar o disparo!");
+            return;
+        }
+
+        filaEnvio = [];
+        checkboxes.forEach(chk => {
+            const c = todosClientes.find(item => item.id == chk.getAttribute('data-id'));
+            if (c) filaEnvio.push(c);
+        });
+
+        indiceAtualFila = 0;
+        document.getElementById('caixaFila').style.display = 'flex';
+        atualizarVisualFila();
+    }
+
+    function atualizarVisualFila() {
+        if (indiceAtualFila >= filaEnvio.length) {
+            document.getElementById('filaTitulo').innerText = "🎉 Disparos Concluídos!";
+            document.getElementById('filaSubtitulo').innerText = `Todos os ${filaEnvio.length} clientes selecionados da rota foram acionados.`;
+            document.getElementById('btnEnviarFila').style.display = 'none';
+            return;
+        }
+
+        const atual = filaEnvio[indiceAtualFila];
+        document.getElementById('btnEnviarFila').style.display = 'inline-block';
+        document.getElementById('filaTitulo').innerText = `Envio ${indiceAtualFila + 1} de ${filaEnvio.length}: ${atual.nome}`;
+        document.getElementById('filaSubtitulo').innerText = `Rota: ${atual.cidade || ''}/${atual.estado || 'RN'} • WhatsApp: ${atual.whatsapp || ''}`;
+        document.getElementById('btnEnviarFila').innerText = `📲 Abrir WhatsApp de ${atual.nome}`;
+    }
+
+    function dispararAtualDaFila() {
+        if (indiceAtualFila >= filaEnvio.length) return;
+
+        const c = filaEnvio[indiceAtualFila];
+        window.open(gerarLinkWhatsApp(c), '_blank');
+
+        const st = document.getElementById('status_' + c.id);
+        if (st) {
+            st.className = 'badge badge-enviado';
+            st.innerText = '✅ Enviado';
+        }
+
+        indiceAtualFila++;
+        atualizarVisualFila();
+    }
+
+    function pararFila() {
+        document.getElementById('caixaFila').style.display = 'none';
+        filaEnvio = [];
+        indiceAtualFila = 0;
     }
 
     function cadastrarRepresentante() {
@@ -148,94 +345,49 @@
         fetch('/api/cadastrar_representante', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome: nome })
+            body: JSON.stringify({ nome })
         })
         .then(res => res.json())
-        .then(resposta => {
-            if (resposta.status === 'sucesso') {
-                alert("Representante salvo com sucesso! ✅");
-                document.getElementById('novo_rep').value = "";
-                carregarDados();
+        .then(res => {
+            if (res.status === 'sucesso') {
+                alert("Representante salvo!");
+                document.getElementById('novo_rep').value = '';
+                carregarDadosIniciais();
             } else {
-                alert("Erro: " + resposta.mensagem);
+                alert("Erro: " + res.mensagem);
             }
         });
     }
 
     function cadastrarCliente() {
-        const nome = document.getElementById('novo_cliente_nome').value.trim();
-        const cidade = document.getElementById('novo_cliente_cidade').value.trim();
-        const estado = document.getElementById('novo_cliente_estado').value;
-        const whatsapp = document.getElementById('novo_cliente_zap').value.trim();
-        const representante = document.getElementById('select_rep_cliente').value;
+        const nome = document.getElementById('cad_nome').value.trim();
+        const cidade = document.getElementById('cad_cidade').value.trim();
+        const estado = document.getElementById('cad_estado').value;
+        const whatsapp = document.getElementById('cad_whatsapp').value.trim();
+        const representante = document.getElementById('cad_rep').value;
 
-        if (!nome) { alert("Digite o nome do cliente/loja!"); return; }
+        if (!nome) { alert("Digite o nome da loja/cliente!"); return; }
 
         fetch('/api/cadastrar_cliente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                nome: nome, 
-                cidade: cidade, 
-                estado: estado, 
-                whatsapp: whatsapp, 
-                representante: representante 
-            })
+            body: JSON.stringify({ nome, cidade, estado, whatsapp, representante })
         })
         .then(res => res.json())
-        .then(resposta => {
-            if (resposta.status === 'sucesso') {
-                alert("Cliente e rota salvos com sucesso! ✅");
-                document.getElementById('novo_cliente_nome').value = "";
-                document.getElementById('novo_cliente_cidade').value = "";
-                document.getElementById('novo_cliente_zap').value = "";
-                carregarDados();
+        .then(res => {
+            if (res.status === 'sucesso') {
+                alert("Cliente cadastrado na rota com sucesso!");
+                document.getElementById('cad_nome').value = '';
+                document.getElementById('cad_cidade').value = '';
+                document.getElementById('cad_whatsapp').value = '';
+                carregarDadosIniciais();
             } else {
-                alert("Erro: " + resposta.mensagem);
+                alert("Erro: " + res.mensagem);
             }
         });
     }
 
-    function preencherDadosEnvio() {
-        const idCliente = document.getElementById('select_cliente_envio').value;
-        const clienteObj = listaClientesGlobal.find(c => c.id == idCliente);
-        if (clienteObj) {
-            document.getElementById('cliente_envio').value = `${clienteObj.nome} (${clienteObj.cidade}/${clienteObj.estado})`;
-            document.getElementById('representante_envio').value = clienteObj.representante || '';
-            document.getElementById('telefone_envio').value = clienteObj.whatsapp || '';
-        }
-    }
-
-    function gerarLink() {
-        const representante = document.getElementById('representante_envio').value.trim();
-        const clienteBruto = document.getElementById('cliente_envio').value.trim();
-
-        if (!representante || !clienteBruto) {
-            alert("Selecione um cliente cadastrado acima!");
-            return;
-        }
-
-        const base = window.location.origin;
-        urlFinal = `${base}/?rep=${encodeURIComponent(representante)}&cliente=${encodeURIComponent(clienteBruto)}`;
-        
-        document.getElementById('link-gerado').innerText = urlFinal;
-        document.getElementById('box-resultado').style.display = 'block';
-    }
-
-    function enviarWhatsApp() {
-        const telefone = document.getElementById('telefone_envio').value.trim();
-        const clienteBruto = document.getElementById('cliente_envio').value.trim();
-        const representante = document.getElementById('representante_envio').value.trim();
-
-        let mensagem = `Olá! Aqui é da Gelato da Fran 🍦. Gostaríamos muito de saber sua opinião sobre o atendimento do nosso representante ${representante}. Por favor, clique no link abaixo para avaliar rapidinho: \n\n${urlFinal}`;
-        
-        let linkZap = `https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(mensagem)}`;
-        if (!telefone) {
-            linkZap = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
-        }
-
-        window.open(linkZap, '_blank');
-    }
+    carregarDadosIniciais();
 </script>
 
 </body>

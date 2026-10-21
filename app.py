@@ -148,7 +148,7 @@ def verificar_senha():
         return jsonify({'status': 'sucesso'})
     return jsonify({'status': 'erro', 'mensagem': 'Senha incorreta!'}), 403
 
-# Rota para Editar Cliente Cadastrado (Já protegido pela sessão da página)
+# Rota para Editar Cliente Cadastrado
 @app.route('/api/editar_cliente', methods=['POST'])
 def editar_cliente():
     if not session.get('admin_autorizado'):
