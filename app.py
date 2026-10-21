@@ -1,13 +1,14 @@
 import os
 from datetime import datetime
 import pytz
-from flask import Flask, render_template, request, jsonify, redirect, url_for, Response
+from flask import Flask, render_template, request, jsonify, redirect, url_for, Response, session
 from flask_sqlalchemy import SQLAlchemy
 import sqlalchemy as sa
 
 app = Flask(__name__)
 
-# SENHA DE ADMINISTRADOR DO SISTEMA
+# CHAVE SECRETA E SENHA DE ADMINISTRADOR
+app.secret_key = 'gelato_fran_secret_key_segura'
 SENHA_ADMIN = "1234"
 
 # Configuração do Banco de Dados PostgreSQL (Render) ou SQLite local de segurança
@@ -137,15 +138,23 @@ def cadastrar_cliente():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Rota para Editar Cliente Cadastrado (Protegido por Senha)
-@app.route('/api/editar_cliente', methods=['POST'])
-def editar_cliente():
+# Rota para Verificar Senha Única de Acesso aos Clientes
+@app.route('/api/verificar_senha', methods=['POST'])
+def verificar_senha():
     dados = request.json
     senha = dados.get('senha', '')
+    if senha == SENHA_ADMIN:
+        session['admin_autorizado'] = True
+        return jsonify({'status': 'sucesso'})
+    return jsonify({'status': 'erro', 'mensagem': 'Senha incorreta!'}), 403
+
+# Rota para Editar Cliente Cadastrado (Já protegido pela sessão da página)
+@app.route('/api/editar_cliente', methods=['POST'])
+def editar_cliente():
+    if not session.get('admin_autorizado'):
+        return jsonify({'status': 'erro', 'mensagem': 'Sessão expirada. Faça login novamente.'}), 403
     
-    if senha != SENHA_ADMIN:
-        return jsonify({'status': 'erro', 'mensagem': 'Senha de administrador incorreta!'}), 403
-    
+    dados = request.json
     cliente_id = dados.get('id')
     cliente = ClienteModel.query.get(cliente_id)
     if not cliente:
@@ -271,9 +280,11 @@ def painel():
         feedbacks, representantes = [], []
     return render_template('painel.html', feedbacks=feedbacks, representantes=representantes)
 
-# Tela Dedicada de Gerenciamento de Clientes
+# Tela Dedicada de Gerenciamento de Clientes (Protegida por Sessão)
 @app.route('/clientes')
 def clientes():
+    if not session.get('admin_autorizado'):
+        return redirect(url_for('painel'))
     try:
         lista_clientes = ClienteModel.query.order_by(ClienteModel.nome).all()
     except Exception as e:

@@ -88,7 +88,7 @@
     </div>
 </div>
 
-<!-- MODAL DE EDIÇÃO DE CLIENTE -->
+<!-- MODAL DE EDIÇÃO DE CLIENTE (Sem pedir senha novamente, pois a página já é protegida) -->
 <div class="modal-overlay" id="modalEditar">
     <div class="modal-card">
         <h3>✏️ Editar Cliente / Loja</h3>
@@ -115,10 +115,6 @@
         <div class="modal-group">
             <label>Representante:</label>
             <input type="text" id="edit_representante">
-        </div>
-        <div class="modal-group" style="border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 10px;">
-            <label style="color: #ef4444;">Senha de Administrador:</label>
-            <input type="password" id="edit_senha" placeholder="Digite a senha...">
         </div>
         <div class="modal-botoes">
             <button class="btn-acao" style="background: #10b981; flex: 1;" onclick="salvarEdicaoCliente()">Salvar</button>
@@ -152,7 +148,6 @@
         document.getElementById('edit_representante').value = representante === 'None' ? '' : representante;
         document.getElementById('edit_cidade').value = cidade === 'None' ? '' : cidade;
         document.getElementById('edit_estado').value = estado === 'None' ? 'RN' : estado;
-        document.getElementById('edit_senha').value = '';
         document.getElementById('modalEditar').style.display = 'flex';
     }
 
@@ -167,17 +162,11 @@
         const estado = document.getElementById('edit_estado').value;
         const whatsapp = document.getElementById('edit_whatsapp').value;
         const representante = document.getElementById('edit_representante').value;
-        const senha = document.getElementById('edit_senha').value;
-
-        if (!senha) {
-            alert("Digite a senha de administrador para salvar as alterações!");
-            return;
-        }
 
         fetch('/api/editar_cliente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, nome, cidade, estado, whatsapp, representante, senha })
+            body: JSON.stringify({ id, nome, cidade, estado, whatsapp, representante })
         })
         .then(res => res.json())
         .then(resposta => {

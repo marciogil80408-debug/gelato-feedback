@@ -63,7 +63,7 @@
             </div>
         </div>
         <div class="botoes-topo">
-            <a href="/clientes" class="btn-acao btn-clientes">📋 Gerenciar Clientes</a>
+            <button class="btn-acao btn-clientes" onclick="acessarClientes()">📋 Gerenciar Clientes</button>
             <button class="btn-acao btn-zerar" onclick="zerarTestes()">🗑️ Zerar Testes</button>
             <a href="/exportar_csv" class="btn-acao btn-excel">📥 Baixar Excel</a>
             <a href="/disparar" class="btn-acao">🚀 Disparador</a>
@@ -297,6 +297,25 @@
         });
 
         renderizarGraficos(dadosFiltrados);
+    }
+
+    function acessarClientes() {
+        const senha = prompt("🔒 Área Restrita: Gerenciamento de Clientes\nDigite a senha de administrador:");
+        if (!senha) return;
+
+        fetch('/api/verificar_senha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senha: senha })
+        })
+        .then(res => res.json())
+        .then(resposta => {
+            if (resposta.status === 'sucesso') {
+                window.location.href = '/clientes';
+            } else {
+                alert("❌ Senha incorreta!");
+            }
+        });
     }
 
     function zerarTestes() {
