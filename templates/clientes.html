@@ -33,7 +33,8 @@
         .modal-card h3 { margin-top: 0; color: #1e3a8a; }
         .modal-group { margin-bottom: 12px; }
         .modal-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #334155; }
-        .modal-group input, .modal-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; }
+        .modal-group input, .modal-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; background: #f8fafc; }
+        .modal-group input:focus, .modal-group select:focus { border-color: #2563eb; background: #fff; }
         .modal-botoes { display: flex; gap: 10px; margin-top: 15px; }
     </style>
 </head>
@@ -91,7 +92,7 @@
     </div>
 </div>
 
-<!-- MODAL DE EDIÇÃO E TROCA DE ROTA -->
+<!-- MODAL DE EDIÇÃO E TROCA DE ROTA COM SELECT DAS ROTAS SALVAS -->
 <div class="modal-overlay" id="modalEditar">
     <div class="modal-card">
         <h3>✏️ Editar / Trocar Rota do Cliente</h3>
@@ -101,8 +102,13 @@
             <input type="text" id="edit_nome">
         </div>
         <div class="modal-group">
-            <label>Rota do Cliente (Alterar Rota):</label>
-            <input type="text" id="edit_rota" placeholder="Ex: Rota de Sousa, Rota de Natal...">
+            <label>Rota do Cliente (Escolha uma Rota Cadastrada):</label>
+            <select id="edit_rota">
+                <option value="Geral">Geral (Sem rota definida)</option>
+                {% for r in rotas %}
+                <option value="{{ r }}">{{ r }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div class="modal-group">
             <label>Cidade:</label>
@@ -153,11 +159,30 @@
     function abrirEditarCliente(id, nome, whatsapp, representante, cidade, estado, rota) {
         document.getElementById('edit_id').value = id;
         document.getElementById('edit_nome').value = nome;
-        document.getElementById('edit_whatsapp').value = whatsapp === 'None' ? '' : whatsapp;
-        document.getElementById('edit_representante').value = representante === 'None' ? '' : representante;
-        document.getElementById('edit_cidade').value = cidade === 'None' ? '' : cidade;
-        document.getElementById('edit_estado').value = estado === 'None' ? 'RN' : estado;
-        document.getElementById('edit_rota').value = (!rota || rota === 'None') ? 'Geral' : rota;
+        document.getElementById('edit_whatsapp').value = (whatsapp === 'None' || !whatsapp) ? '' : whatsapp;
+        document.getElementById('edit_representante').value = (representante === 'None' || !representante) ? '' : representante;
+        document.getElementById('edit_cidade').value = (cidade === 'None' || !cidade) ? '' : cidade;
+        document.getElementById('edit_estado').value = (estado === 'None' || !estado) ? 'RN' : estado;
+        
+        const rotaSel = document.getElementById('edit_rota');
+        const rotaValor = (!rota || rota === 'None') ? 'Geral' : rota;
+
+        // Se o cliente tiver uma rota que ainda não está na lista, adiciona automaticamente
+        let existe = false;
+        for (let i = 0; i < rotaSel.options.length; i++) {
+            if (rotaSel.options[i].value === rotaValor) {
+                existe = true;
+                break;
+            }
+        }
+        if (!existe && rotaValor) {
+            const opt = document.createElement('option');
+            opt.value = rotaValor;
+            opt.text = rotaValor;
+            rotaSel.add(opt);
+        }
+        rotaSel.value = rotaValor;
+
         document.getElementById('modalEditar').style.display = 'flex';
     }
 
