@@ -27,13 +27,13 @@ class RepresentanteModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
 
-# Tabela de Rotas Cadastradas (Ex: Rota de Natal, Rota de Sousa, Rota de Fortaleza)
+# Tabela de Rotas Cadastradas (Ex: Rota de Sousa, Rota de Natal, Rota de Fortaleza)
 class RotaModel(db.Model):
     __tablename__ = 'rota_model'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
 
-# Tabela de Clientes/Lojas (Com Rota, Cidade e Estado)
+# Tabela de Clientes/Lojas (Com Rota, Freezer Comodato e Forma de Pagamento)
 class ClienteModel(db.Model):
     __tablename__ = 'cliente_model'
     id = db.Column(db.Integer, primary_key=True)
@@ -43,6 +43,8 @@ class ClienteModel(db.Model):
     cidade = db.Column(db.String(100), nullable=True)
     estado = db.Column(db.String(10), nullable=True)
     rota = db.Column(db.String(100), nullable=True)
+    freezer = db.Column(db.String(100), nullable=True)
+    pagamento_padrao = db.Column(db.String(100), nullable=True)
 
 # Tabela de Feedbacks / Avaliações dos Clientes
 class Feedback(db.Model):
@@ -65,7 +67,7 @@ class Feedback(db.Model):
 with app.app_context():
     db.create_all()
     
-    # SEGURANÇA AUTOMÁTICA: Adiciona colunas ausentes sem NUNCA apagar dados existentes
+    # SEGURANÇA AUTOMÁTICA: Adiciona colunas ausentes sem apagar dados existentes
     try:
         inspector = sa.inspect(db.engine)
         tables = inspector.get_table_names()
@@ -96,17 +98,21 @@ with app.app_context():
                 if 'rota' not in col_cl:
                     conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN rota VARCHAR(100)'))
                     conn.commit()
+                if 'freezer' not in col_cl:
+                    conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN freezer VARCHAR(100)'))
+                    conn.commit()
+                if 'pagamento_padrao' not in col_cl:
+                    conn.execute(sa.text('ALTER TABLE cliente_model ADD COLUMN pagamento_padrao VARCHAR(100)'))
+                    conn.commit()
     except Exception as e:
         print("Aviso na checagem de colunas:", str(e))
 
-# Página de Avaliação do Cliente
 @app.route('/')
 def avaliacao():
     representante = request.args.get('rep', 'Representante')
     cliente = request.args.get('cliente', 'Cliente')
     return render_template('avaliacao.html', representante=representante, cliente=cliente)
 
-# Cadastrar Representante
 @app.route('/api/cadastrar_representante', methods=['POST'])
 def cadastrar_representante():
     dados = request.json
@@ -122,7 +128,6 @@ def cadastrar_representante():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Cadastrar Nova Rota (Ex: Rota de Sousa, Rota de Natal)
 @app.route('/api/cadastrar_rota', methods=['POST'])
 def cadastrar_rota():
     dados = request.json
@@ -138,7 +143,6 @@ def cadastrar_rota():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Cadastrar Cliente com Rota
 @app.route('/api/cadastrar_cliente', methods=['POST'])
 def cadastrar_cliente():
     dados = request.json
@@ -148,6 +152,8 @@ def cadastrar_cliente():
     cidade = dados.get('cidade', '').strip()
     estado = dados.get('estado', '').strip()
     rota = dados.get('rota', '').strip()
+    freezer = dados.get('freezer', '').strip()
+    pagamento_padrao = dados.get('pagamento_padrao', '').strip()
     
     if not nome:
         return jsonify({'status': 'erro', 'mensagem': 'Nome do cliente obrigatório'}), 400
@@ -158,7 +164,9 @@ def cadastrar_cliente():
             representante=representante,
             cidade=cidade,
             estado=estado,
-            rota=rota
+            rota=rota,
+            freezer=freezer or 'Sem Freezer',
+            pagamento_padrao=pagamento_padrao or 'A Combinar'
         )
         db.session.add(novo)
         db.session.commit()
@@ -166,7 +174,6 @@ def cadastrar_cliente():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Verificar Senha do Administrador
 @app.route('/api/verificar_senha', methods=['POST'])
 def verificar_senha():
     dados = request.json
@@ -176,7 +183,6 @@ def verificar_senha():
         return jsonify({'status': 'sucesso'})
     return jsonify({'status': 'erro', 'mensagem': 'Senha incorreta!'}), 403
 
-# Editar Cliente (Permitindo trocar a rota facilmente)
 @app.route('/api/editar_cliente', methods=['POST'])
 def editar_cliente():
     if not session.get('admin_autorizado'):
@@ -195,13 +201,14 @@ def editar_cliente():
         cliente.cidade = dados.get('cidade', cliente.cidade).strip()
         cliente.estado = dados.get('estado', cliente.estado).strip()
         cliente.rota = dados.get('rota', cliente.rota).strip()
+        cliente.freezer = dados.get('freezer', cliente.freezer or 'Sem Freezer').strip()
+        cliente.pagamento_padrao = dados.get('pagamento_padrao', cliente.pagamento_padrao or 'A Combinar').strip()
         
         db.session.commit()
         return jsonify({'status': 'sucesso'})
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Zerar Feedbacks de Teste (Protegido por Senha)
 @app.route('/api/zerar_feedbacks', methods=['POST'])
 def zerar_feedbacks():
     dados = request.json
@@ -216,7 +223,6 @@ def zerar_feedbacks():
     except Exception as e:
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Retornar Dados Cadastrados (Clientes, Representantes e Rotas)
 @app.route('/api/dados_cadastrados')
 def dados_cadastrados():
     reps = [r.nome for r in RepresentanteModel.query.order_by(RepresentanteModel.nome).all()]
@@ -228,11 +234,12 @@ def dados_cadastrados():
         'representante': c.representante,
         'cidade': c.cidade or 'Não informada',
         'estado': c.estado or 'RN',
-        'rota': c.rota or 'Geral'
+        'rota': c.rota or 'Geral',
+        'freezer': c.freezer or 'Sem Freezer',
+        'pagamento_padrao': c.pagamento_padrao or 'A Combinar'
     } for c in ClienteModel.query.all()]
     return jsonify({'representantes': reps, 'rotas': rotas, 'clientes': clientes})
 
-# Salvar Feedback
 @app.route('/salvar', methods=['POST'])
 def salvar():
     dados = request.json
@@ -262,7 +269,6 @@ def salvar():
         print("Erro ao salvar:", str(e))
         return jsonify({'status': 'erro', 'mensagem': str(e)}), 500
 
-# Exportar CSV para Excel
 def escape_csv(val):
     val_str = str(val or '')
     val_str = val_str.replace('"', '""').replace('\n', ' ')
@@ -298,7 +304,6 @@ def exportar_csv():
     except Exception as e:
         return str(e), 500
 
-# Painel
 @app.route('/painel')
 def painel():
     try:
@@ -309,7 +314,6 @@ def painel():
         feedbacks, representantes = [], []
     return render_template('painel.html', feedbacks=feedbacks, representantes=representantes)
 
-# Tela de Clientes
 @app.route('/clientes')
 def clientes():
     if not session.get('admin_autorizado'):
@@ -322,7 +326,6 @@ def clientes():
         lista_clientes, rotas = [], []
     return render_template('clientes.html', clientes=lista_clientes, rotas=rotas)
 
-# Tela do Disparador
 @app.route('/disparar')
 def disparar():
     return render_template('disparar.html')

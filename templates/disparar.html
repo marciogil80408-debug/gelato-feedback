@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1150px; margin: 0 auto; }
         
         .header-painel { background: #fff; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-left: 6px solid #2563eb; flex-wrap: wrap; gap: 15px; }
         .logo-area { display: flex; align-items: center; gap: 15px; }
@@ -52,6 +52,8 @@
         .badge-aguardando { background: #f1f5f9; color: #475569; }
         .badge-enviado { background: #dcfce7; color: #166534; }
         .badge-rota { background: #ede9fe; color: #6d28d9; font-weight: bold; }
+        .badge-freezer { background: #e0f2fe; color: #0369a1; font-weight: bold; }
+        .badge-pag { background: #fef3c7; color: #92400e; font-weight: bold; }
         .btn-mini { background: #2563eb; color: white; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-mini:hover { background: #1d4ed8; }
         
@@ -75,7 +77,7 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Gelato da Fran" style="height: 55px; width: auto; border-radius: 10px; object-fit: contain;">
             <div>
                 <h1>Central de Rotas e Disparos</h1>
-                <p>Organizador de Itinerário, Logística e Disparador</p>
+                <p>Organizador de Itinerário, Logística, Freezers e Cobranças</p>
             </div>
         </div>
         <div>
@@ -104,7 +106,7 @@
 
     <!-- SEÇÃO 2: CADASTRO DE CLIENTE -->
     <div class="card">
-        <h2>3. Cadastrar Cliente e Vincular na Rota 🏢</h2>
+        <h2>3. Cadastrar Cliente (Com Rota, Freezer e Pagamento) 🏢</h2>
         <div class="form-grid">
             <div class="form-group">
                 <label>Nome do Cliente / Loja:</label>
@@ -114,6 +116,22 @@
                 <label>Vincular à Rota:</label>
                 <select id="cad_rota">
                     <option value="">Selecione a rota...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>❄️ Freezer Comodato (Nº de Patrimônio):</label>
+                <input type="text" id="cad_freezer" placeholder="Ex: Freezer 014 (400L) ou Sem Freezer">
+            </div>
+            <div class="form-group">
+                <label>💳 Forma de Pagamento:</label>
+                <select id="cad_pagamento">
+                    <option value="A Combinar">A Combinar</option>
+                    <option value="Pix na Entrega">Pix na Entrega</option>
+                    <option value="À Vista (Dinheiro)">À Vista (Dinheiro)</option>
+                    <option value="Boleto 7 Dias">Boleto 7 Dias</option>
+                    <option value="Boleto 14 Dias">Boleto 14 Dias</option>
+                    <option value="Boleto 21 Dias">Boleto 21 Dias</option>
+                    <option value="Faturamento Mensal">Faturamento Mensal</option>
                 </select>
             </div>
             <div class="form-group">
@@ -160,7 +178,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Buscar Loja ou Cidade:</label>
+                <label>Buscar Loja, Cidade ou Freezer:</label>
                 <input type="text" id="filtro_busca" placeholder="Digite para buscar..." onkeyup="renderizarTabela()">
             </div>
         </div>
@@ -201,26 +219,28 @@
         </div>
 
         <p style="font-size: 12px; color: #64748b; margin-top: 15px; margin-bottom: 5px;">
-            💡 <strong>Dica de Rota:</strong> Clique e arraste o ícone <strong>☰</strong> ou use os botões <strong>⬆️ / ⬇️</strong> para colocar as lojas na ordem exata de entrega antes de enviar o romaneio!
+            💡 <strong>Itinerário Inteligente:</strong> Arraste pelo ícone <strong>☰</strong> ou use os botões <strong>⬆️ / ⬇️</strong> para colocar as lojas na ordem exata de entrega antes de enviar o romaneio!
         </p>
 
-        <!-- Tabela com Suporte a Drag-and-Drop -->
+        <!-- Tabela Reordenável com Cobrança e Freezer -->
         <table>
             <thead>
                 <tr>
                     <th style="width: 75px; text-align: center;">Ordem</th>
                     <th style="width: 40px; text-align: center;">Sel.</th>
                     <th>Loja / Cliente</th>
-                    <th>Rota Vinculada</th>
+                    <th>Rota</th>
                     <th>Cidade / Estado</th>
                     <th>WhatsApp</th>
+                    <th>💳 Pagamento</th>
+                    <th>❄️ Freezer</th>
                     <th>Status</th>
                     <th style="text-align: center;">Ação</th>
                 </tr>
             </thead>
             <tbody id="tabelaCorpo">
                 <tr>
-                    <td colspan="8" style="text-align: center; color: #64748b; padding: 20px;">Carregando dados da rota...</td>
+                    <td colspan="10" style="text-align: center; color: #64748b; padding: 20px;">Carregando dados da rota...</td>
                 </tr>
             </tbody>
         </table>
@@ -300,12 +320,12 @@
         let filtrados = todosClientes.filter(c => {
             let matchRota = !fRota || c.rota === fRota;
             let matchRep = !fRep || c.representante === fRep;
-            let matchBusca = !fBusca || c.nome.toLowerCase().includes(fBusca) || (c.cidade || '').toLowerCase().includes(fBusca) || (c.rota || '').toLowerCase().includes(fBusca);
+            let matchBusca = !fBusca || c.nome.toLowerCase().includes(fBusca) || (c.cidade || '').toLowerCase().includes(fBusca) || (c.rota || '').toLowerCase().includes(fBusca) || (c.freezer || '').toLowerCase().includes(fBusca);
             return matchRota && matchRep && matchBusca;
         });
 
         if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente encontrado nessa rota.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #64748b; padding: 20px;">Nenhum cliente encontrado nessa rota.</td></tr>';
             return;
         }
 
@@ -328,6 +348,8 @@
                 <td><span class="badge badge-rota">${c.rota || 'Geral'}</span></td>
                 <td>${c.cidade || '-'} / ${c.estado || 'RN'}</td>
                 <td>${c.whatsapp || '-'}</td>
+                <td><span class="badge badge-pag">${c.pagamento_padrao || 'A Combinar'}</span></td>
+                <td><span class="badge badge-freezer">${c.freezer || 'Sem Freezer'}</span></td>
                 <td><span class="badge badge-aguardando" id="status_${c.id}">Aguardando</span></td>
                 <td style="text-align: center;">
                     <button class="btn-mini" onclick="enviarIndividual('${c.id}')">📲 Enviar</button>
@@ -339,7 +361,6 @@
         });
     }
 
-    // Gerenciador de arrastar e soltar (Drag and Drop nativo)
     let linhaArrastada = null;
 
     function configurarEventosDrag(tr) {
@@ -385,7 +406,6 @@
         });
     }
 
-    // Botões de subir e descer linha (ideal para telas touch/mobile)
     function moverLinha(botao, direcao) {
         const linha = botao.closest('tr');
         const tbody = document.getElementById('tabelaCorpo');
@@ -426,7 +446,6 @@
         }
     }
 
-    // Pega a lista exatamente na ordem visual da tabela (respeitando o arrastar e soltar)
     function obterClientesOrdenadosSelecionados() {
         const linhas = document.querySelectorAll('#tabelaCorpo tr.linha-arrastavel');
         let selecionados = [];
@@ -443,6 +462,7 @@
         return selecionados;
     }
 
+    // ROMANEIO COMPLETO COM COBRANÇA E FREEZER
     function montarTextoRomaneio() {
         const selecionados = obterClientesOrdenadosSelecionados();
         if (selecionados.length === 0) {
@@ -460,16 +480,21 @@
         texto += `👤 *Representante:* ${repSel}\n`;
         texto += `📦 *Total de Entregas:* ${selecionados.length} lojas programadas\n`;
         texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `📋 *ORDEM DE ENTREGA (ITINERÁRIO):*\n\n`;
+        texto += `📋 *ORDEM DE ENTREGA (ITINERÁRIO E COBRANÇAS):*\n\n`;
 
         selecionados.forEach((c, index) => {
             texto += `${index + 1}. *${c.nome.toUpperCase()}*\n`;
             texto += `   📍 Cidade: ${c.cidade || 'Não informada'} / ${c.estado || 'RN'}\n`;
-            texto += `   📞 Contato: ${c.whatsapp || 'Não informado'}\n\n`;
+            texto += `   📞 Contato: ${c.whatsapp || 'Não informado'}\n`;
+            texto += `   💳 Pagamento: *${c.pagamento_padrao || 'A Combinar'}*\n`;
+            if (c.freezer && c.freezer !== 'Sem Freezer' && c.freezer !== 'None') {
+                texto += `   ❄️ Freezer Comodato: ${c.freezer}\n`;
+            }
+            texto += `\n`;
         });
 
         texto += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        texto += `⚠️ *Aviso Logística:* Motorista e conferência, favor checar os pedidos antes da saída do caminhão.`;
+        texto += `⚠️ *Aviso Logística:* Motorista e conferência, checar pagamentos e pedidos antes do descarregamento.`;
 
         return texto;
     }
@@ -479,7 +504,7 @@
         if (!texto) return;
 
         navigator.clipboard.writeText(texto).then(() => {
-            alert("📋 Romaneio na ordem correta copiado com sucesso!\n\nAgora basta colar (Ctrl+V) no WhatsApp do grupo de logística.");
+            alert("📋 Romaneio completo com cobranças e freezers copiado com sucesso!\n\nAgora basta colar (Ctrl+V) no WhatsApp do grupo de logística.");
         }).catch(() => {
             prompt("Copie o texto do romaneio abaixo (Ctrl+C):", texto);
         });
@@ -492,7 +517,6 @@
         window.open(urlWhats, '_blank');
     }
 
-    // Fila guiada também segue a nova ordem personalizada
     function iniciarFilaGuiada() {
         filaEnvio = obterClientesOrdenadosSelecionados();
         if (filaEnvio.length === 0) {
@@ -587,6 +611,8 @@
     function cadastrarCliente() {
         const nome = document.getElementById('cad_nome').value.trim();
         const rota = document.getElementById('cad_rota').value;
+        const freezer = document.getElementById('cad_freezer').value.trim();
+        const pagamento_padrao = document.getElementById('cad_pagamento').value;
         const cidade = document.getElementById('cad_cidade').value.trim();
         const estado = document.getElementById('cad_estado').value;
         const whatsapp = document.getElementById('cad_whatsapp').value.trim();
@@ -597,7 +623,7 @@
         fetch('/api/cadastrar_cliente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, rota, cidade, estado, whatsapp, representante })
+            body: JSON.stringify({ nome, rota, freezer, pagamento_padrao, cidade, estado, whatsapp, representante })
         })
         .then(res => res.json())
         .then(res => {
@@ -606,6 +632,7 @@
                 document.getElementById('cad_nome').value = '';
                 document.getElementById('cad_cidade').value = '';
                 document.getElementById('cad_whatsapp').value = '';
+                document.getElementById('cad_freezer').value = '';
                 carregarDadosIniciais();
             } else {
                 alert("Erro: " + res.mensagem);
